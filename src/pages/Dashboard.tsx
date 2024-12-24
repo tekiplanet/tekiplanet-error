@@ -85,6 +85,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const [isDesktopNotificationPopoverOpen, setIsDesktopNotificationPopoverOpen] = useState(false);
+  const [isMobileNotificationPopoverOpen, setIsMobileNotificationPopoverOpen] = useState(false);
 
   useEffect(() => {
     console.log('Dashboard received notifications:', notifications);
@@ -436,7 +438,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
 
                 {/* Add Notifications and Test Button here */}
                 <div className="flex items-center gap-2">
-                  <Popover>
+                  <Popover open={isDesktopNotificationPopoverOpen} onOpenChange={setIsDesktopNotificationPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative">
                         <Bell className="h-5 w-5" />
@@ -520,7 +522,10 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                                           variant="ghost"
                                           size="sm"
                                           className="h-6 text-xs"
-                                          onClick={() => navigate(notification.action_url)}
+                                          onClick={() => {
+                                            navigate(notification.action_url);
+                                            setIsDesktopNotificationPopoverOpen(false);
+                                          }}
                                         >
                                           <ExternalLink className="mr-1 h-3 w-3" />
                                           View
@@ -547,7 +552,10 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                           <Button
                             variant="ghost"
                             className="w-full justify-center text-sm"
-                            onClick={() => navigate('/dashboard/notifications')}
+                            onClick={() => {
+                              navigate('/dashboard/notifications');
+                              setIsDesktopNotificationPopoverOpen(false);
+                            }}
                           >
                             View all notifications
                           </Button>
@@ -878,7 +886,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
 
             <div className="flex items-center gap-2">
               {/* Mobile Notifications */}
-              <Popover>
+              <Popover open={isMobileNotificationPopoverOpen} onOpenChange={setIsMobileNotificationPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
@@ -962,7 +970,10 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                                       variant="ghost"
                                       size="sm"
                                       className="h-6 text-xs"
-                                      onClick={() => navigate(notification.action_url)}
+                                      onClick={() => {
+                                        navigate(notification.action_url);
+                                        setIsMobileNotificationPopoverOpen(false);
+                                      }}
                                     >
                                       <ExternalLink className="mr-1 h-3 w-3" />
                                       View
@@ -989,7 +1000,10 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                       <Button
                         variant="ghost"
                         className="w-full justify-center text-sm"
-                        onClick={() => navigate('/dashboard/notifications')}
+                        onClick={() => {
+                          navigate('/dashboard/notifications');
+                          setIsMobileNotificationPopoverOpen(false);
+                        }}
                       >
                         View all notifications
                       </Button>
