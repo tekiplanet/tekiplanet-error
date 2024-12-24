@@ -42,7 +42,8 @@ import {
   CircleDollarSign,
   Wallet,
   MoreVertical,
-  Users
+  Users,
+  Eye
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getStatusBadgeProps } from "@/lib/format";
@@ -728,7 +729,11 @@ export default function CustomerDetails() {
                           </TableHeader>
                           <TableBody>
                             {invoices.map((invoice) => (
-                              <TableRow key={invoice.id}>
+                              <TableRow 
+                                key={invoice.id}
+                                className="cursor-pointer"
+                                onClick={() => navigate(`/dashboard/business/invoices/${invoice.id}`)}
+                              >
                                 <TableCell>{invoice.invoice_number}</TableCell>
                                 <TableCell>{formatDate(invoice.created_at)}</TableCell>
                                 <TableCell>{formatDate(invoice.due_date)}</TableCell>
@@ -750,7 +755,10 @@ export default function CustomerDetails() {
                                       variant="ghost"
                                       size="icon"
                                       disabled={isDownloading}
-                                      onClick={() => handleDownloadInvoice(invoice.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadInvoice(invoice.id);
+                                      }}
                                     >
                                       {isDownloading ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -762,7 +770,10 @@ export default function CustomerDetails() {
                                       variant="ghost"
                                       size="icon"
                                       disabled={isSending}
-                                      onClick={() => handleSendInvoice(invoice.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSendInvoice(invoice.id);
+                                      }}
                                     >
                                       {isSending ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -784,7 +795,7 @@ export default function CustomerDetails() {
                           <div 
                             key={invoice.id} 
                             className="p-4 space-y-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                            onClick={() => navigate(`/dashboard/business/customers/${customerId}/invoices/${invoice.id}`)}
+                            onClick={() => navigate(`/dashboard/business/invoices/${invoice.id}`)}
                           >
                             <div className="flex justify-between items-start">
                               <div>

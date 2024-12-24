@@ -36,6 +36,7 @@ import { getStatusBadgeProps, getPaymentStatusText } from "@/lib/format";
 import { differenceInDays, isSameDay, isPast, format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/EmptyState";
 
 // Status badge variants mapping
 const statusVariants: Record<string, "default" | "secondary" | "destructive" | "success"> = {

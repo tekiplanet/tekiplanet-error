@@ -151,12 +151,8 @@ const AppContent = () => {
               } 
             />
             <Route 
-              path="business/customers/:customerId/invoices/:invoiceId" 
-              element={
-                <ProtectedRoute>
-                  <InvoiceDetails />
-                </ProtectedRoute>
-              } 
+              path="business/invoices/:invoiceId" 
+              element={<InvoiceDetails />}
             />
             <Route path="business/dashboard" element={<BusinessDashboard />} />
             <Route path="business/activities" element={<BusinessActivities />} />
