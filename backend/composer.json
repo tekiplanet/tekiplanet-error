@@ -16,7 +16,7 @@
         "pragmarx/google2fa": "^8.0",
         "pusher/pusher-php-server": "^7.2",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "tecnickcom/tcpdf": "^6.7",
+        "tecnickcom/tcpdf": "^6.8",
         "yabacon/paystack-php": "^2.2"
     },
     "require-dev": {

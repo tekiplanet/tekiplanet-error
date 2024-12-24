@@ -387,6 +387,8 @@ export default function CustomerDetails() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isInvoiceFormOpen, setIsInvoiceFormOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', customerId],
@@ -415,6 +417,30 @@ export default function CustomerDetails() {
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (invoiceId: string) => {
+    try {
+      setIsDownloading(true);
+      await businessService.downloadInvoice(invoiceId);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download invoice');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleSendInvoice = async (invoiceId: string) => {
+    try {
+      setIsSending(true);
+      await businessService.sendInvoice(invoiceId);
+      toast.success('Invoice sent successfully');
+    } catch (error) {
+      toast.error('Failed to send invoice');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -719,13 +745,32 @@ export default function CustomerDetails() {
                                   )}
                                 </TableCell>
                                 <TableCell>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => navigate(`/dashboard/business/customers/${customerId}/invoices/${invoice.id}`)}
-                                  >
-                                    <FileText className="h-4 w-4" />
-                                  </Button>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      disabled={isDownloading}
+                                      onClick={() => handleDownloadInvoice(invoice.id)}
+                                    >
+                                      {isDownloading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Download className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      disabled={isSending}
+                                      onClick={() => handleSendInvoice(invoice.id)}
+                                    >
+                                      {isSending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Send className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}

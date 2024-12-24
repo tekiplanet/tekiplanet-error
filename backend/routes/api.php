@@ -304,10 +304,10 @@ Route::middleware('auth:sanctum')->prefix('business')->group(function () {
         Route::post('/', [BusinessInvoiceController::class, 'store']);
         Route::get('/{id}', [BusinessInvoiceController::class, 'show'])
             ->name('business.invoices.show');
-        Route::get('/{invoice}/download', [BusinessInvoiceController::class, 'downloadPDF']);
-        Route::post('/{invoice}/send', [BusinessInvoiceController::class, 'sendInvoice']);
-        Route::post('/{invoice}/payments', [BusinessInvoiceController::class, 'recordPayment']);
-        Route::put('/{invoice}/status', [BusinessInvoiceController::class, 'updateStatus']);
+        Route::get('/{id}/download', [BusinessInvoiceController::class, 'download']);
+        Route::post('/{id}/send', [BusinessInvoiceController::class, 'send']);
+        Route::post('/{id}/payments', [BusinessInvoiceController::class, 'recordPayment']);
+        Route::patch('/{id}/status', [BusinessInvoiceController::class, 'updateStatus']);
     });
 
     // Customer invoice routes

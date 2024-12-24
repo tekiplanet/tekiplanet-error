@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use TCPDF;
 use App\Services\CurrencyService;
+use App\Jobs\SendInvoiceEmail;
 
 class BusinessInvoiceController extends Controller
 {
@@ -169,151 +170,11 @@ class BusinessInvoiceController extends Controller
         }
     }
 
-    public function downloadPDF($id)
+    public function download($id)
     {
         try {
             $invoice = BusinessInvoice::with(['items', 'business', 'customer'])
                 ->findOrFail($id);
-
-            // Check if user owns the business
-            if ($invoice->business->user_id !== Auth::id()) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
-
-            // Create PDF instance
-            $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-            // Set document information
-            $pdf->SetCreator(PDF_CREATOR);
-            $pdf->SetAuthor($invoice->business->business_name);
-            $pdf->SetTitle('Invoice #' . $invoice->invoice_number);
-
-            // Remove default header/footer
-            $pdf->setPrintHeader(false);
-            $pdf->setPrintFooter(false);
-
-            // Set margins
-            $pdf->SetMargins(15, 15, 15);
-
-            // Add a page
-            $pdf->AddPage();
-
-            // Set font
-            $pdf->SetFont('helvetica', '', 10);
-
-            // Add business logo if exists
-            if ($invoice->business->logo_url) {
-                $pdf->Image($invoice->business->logo_url, 15, 15, 40);
-                $pdf->Ln(20);
-            }
-
-            // Invoice Title with theme color
-            $themeColor = $invoice->theme_color ?? '#0000FF';
-            list($r, $g, $b) = sscanf($themeColor, "#%02x%02x%02x");
-            $pdf->SetTextColor($r, $g, $b);
-            $pdf->SetFont('helvetica', 'B', 20);
-            $pdf->Cell(0, 10, 'INVOICE', 0, 1, 'R');
-            $pdf->SetTextColor(0, 0, 0);
-
-            // Business Information
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(120, 45);
-            $pdf->MultiCell(75, 5, 
-                $invoice->business->business_name . "\n" .
-                $invoice->business->address . "\n" .
-                $invoice->business->email . "\n" .
-                $invoice->business->phone,
-                0, 'R');
-
-            // Invoice Details
-            $pdf->SetXY(15, 45);
-            $pdf->MultiCell(90, 5,
-                "Invoice #: " . $invoice->invoice_number . "\n" .
-                "Date: " . $invoice->created_at->format('M d, Y') . "\n" .
-                "Due Date: " . $invoice->due_date->format('M d, Y') . "\n" .
-                "Status: " . ucwords(str_replace('_', ' ', $invoice->status)) . "\n" .
-                ($invoice->paid_amount > 0 ? "Amount Paid: " . number_format($invoice->paid_amount, 2) . "\n" : "") .
-                ($invoice->paid_amount > 0 ? "Balance Due: " . number_format($invoice->amount - $invoice->paid_amount, 2) : ""),
-                0, 'L');
-
-            // Customer Information
-            $pdf->Ln(10);
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->Cell(0, 8, 'Bill To:', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->MultiCell(0, 5,
-                $invoice->customer->name . "\n" .
-                ($invoice->customer->address ? $invoice->customer->address . "\n" : '') .
-                "Email: " . $invoice->customer->email . "\n" .
-                "Phone: " . $invoice->customer->phone,
-                0, 'L');
-
-            // Items Table
-            $pdf->Ln(10);
-            $pdf->SetFillColor($r, $g, $b);
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('helvetica', 'B', 10);
-            
-            // Table Header
-            $pdf->Cell(90, 8, 'Description', 1, 0, 'L', true);
-            $pdf->Cell(30, 8, 'Quantity', 1, 0, 'C', true);
-            $pdf->Cell(30, 8, 'Unit Price', 1, 0, 'R', true);
-            $pdf->Cell(30, 8, 'Amount', 1, 1, 'R', true);
-            
-            // Reset text color
-            $pdf->SetTextColor(0, 0, 0);
-            
-            // Table Content
-            $pdf->SetFont('helvetica', '', 10);
-            foreach ($invoice->items as $item) {
-                $pdf->Cell(90, 8, $item->description, 1, 0, 'L');
-                $pdf->Cell(30, 8, $item->quantity, 1, 0, 'C');
-                $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($item->unit_price, 2), 1, 0, 'R');
-                $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($item->amount, 2), 1, 1, 'R');
-            }
-
-            // Total
-            $pdf->SetFont('helvetica', 'B', 10);
-            $pdf->Cell(150, 8, 'Total:', 1, 0, 'R', true);
-            $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($invoice->amount, 2), 1, 1, 'R', true);
-
-            if ($invoice->notes) {
-                $pdf->Ln(10);
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->Cell(0, 8, 'Notes:', 0, 1, 'L');
-                $pdf->SetFont('helvetica', '', 10);
-                $pdf->MultiCell(0, 5, $invoice->notes, 0, 'L');
-            }
-
-            // Generate and return PDF without changing status
-            return response($pdf->Output('', 'S'))
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="Invoice_' . $invoice->invoice_number . '.pdf"');
-
-        } catch (\Exception $e) {
-            \Log::error('Failed to generate invoice PDF:', [
-                'id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to generate invoice PDF',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function sendInvoice($id)
-    {
-        try {
-            $invoice = BusinessInvoice::with(['items', 'business', 'customer'])
-                ->findOrFail($id);
-
-            // Check if user owns the business
-            if ($invoice->business->user_id !== Auth::id()) {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
 
             // Generate PDF
             $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -336,108 +197,159 @@ class BusinessInvoiceController extends Controller
             // Set font
             $pdf->SetFont('helvetica', '', 10);
 
-            // Add business logo if exists
-            if ($invoice->business->logo_url) {
-                $pdf->Image($invoice->business->logo_url, 15, 15, 40);
-                $pdf->Ln(20);
-            }
-
-            // Invoice Title with theme color
+            // Get status details for styling
+            $statusDetails = $invoice->getStatusDetails();
             $themeColor = $invoice->theme_color ?? '#0000FF';
+            
+            // Convert hex color to RGB for TCPDF
             list($r, $g, $b) = sscanf($themeColor, "#%02x%02x%02x");
-            $pdf->SetTextColor($r, $g, $b);
-            $pdf->SetFont('helvetica', 'B', 20);
-            $pdf->Cell(0, 10, 'INVOICE', 0, 1, 'R');
-            $pdf->SetTextColor(0, 0, 0);
+            
+            // Start with custom styling
+            $html = '<style>
+                .header { color: rgb('.$r.','.$g.','.$b.'); }
+                .status { 
+                    padding: 5px 10px;
+                    color: white;
+                    background-color: rgb('.$r.','.$g.','.$b.');
+                    display: inline-block;
+                    border-radius: 4px;
+                }
+                .total-section {
+                    background-color: rgb('.($r*0.95).','.($g*0.95).','.($b*0.95).');
+                    color: white;
+                    padding: 10px;
+                }
+            </style>';
 
-            // Business Information
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(120, 45);
-            $pdf->MultiCell(75, 5, 
-                $invoice->business->business_name . "\n" .
-                $invoice->business->address . "\n" .
-                $invoice->business->email . "\n" .
-                $invoice->business->phone,
-                0, 'R');
+            // Business Information with theme color
+            $html .= '<h1 class="header" style="font-size: 24pt;">INVOICE</h1>';
+            $html .= '<div style="margin-bottom: 20px;">';
+            $html .= '<strong style="color: rgb('.$r.','.$g.','.$b.');">' . $invoice->business->business_name . '</strong><br>';
+            $html .= $invoice->business->address . '<br>';
+            $html .= 'Email: ' . $invoice->business->business_email . '<br>';
+            $html .= 'Phone: ' . $invoice->business->phone_number . '<br>';
+            $html .= '</div>';
 
-            // Invoice Details
-            $pdf->SetXY(15, 45);
-            $pdf->MultiCell(90, 5,
-                "Invoice #: " . $invoice->invoice_number . "\n" .
-                "Date: " . $invoice->created_at->format('M d, Y') . "\n" .
-                "Due Date: " . $invoice->due_date->format('M d, Y') . "\n" .
-                "Status: " . ucwords(str_replace('_', ' ', $invoice->status)),
-                0, 'L');
+            // Invoice Details with Status
+            $html .= '<div style="margin-bottom: 20px;">';
+            $html .= '<table width="100%"><tr>';
+            $html .= '<td width="60%">';
+            $html .= '<strong>Invoice #:</strong> ' . $invoice->invoice_number . '<br>';
+            $html .= '<strong>Date:</strong> ' . $invoice->created_at->format('Y-m-d') . '<br>';
+            $html .= '<strong>Due Date:</strong> ' . $invoice->due_date->format('Y-m-d') . '<br>';
+            $html .= '</td>';
+            $html .= '<td width="40%" align="right">';
+            $html .= '<div class="status">' . strtoupper($statusDetails['label']) . '</div>';
+            $html .= '</td>';
+            $html .= '</tr></table>';
+            $html .= '</div>';
 
             // Customer Information
-            $pdf->Ln(10);
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->Cell(0, 8, 'Bill To:', 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->MultiCell(0, 5,
-                $invoice->customer->name . "\n" .
-                ($invoice->customer->address ? $invoice->customer->address . "\n" : '') .
-                "Email: " . $invoice->customer->email . "\n" .
-                "Phone: " . $invoice->customer->phone,
-                0, 'L');
+            $html .= '<div style="margin-bottom: 20px;">';
+            $html .= '<strong>Bill To:</strong><br>';
+            $html .= $invoice->customer->name . '<br>';
+            $html .= $invoice->customer->address . '<br>';
+            $html .= 'Email: ' . $invoice->customer->email . '<br>';
+            $html .= 'Phone: ' . $invoice->customer->phone . '<br>';
+            $html .= '</div>';
 
             // Items Table
-            $pdf->Ln(10);
-            $pdf->SetFillColor($r, $g, $b);
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('helvetica', 'B', 10);
+            $html .= '<table border="1" cellpadding="5">';
+            $html .= '<tr style="background-color: rgb('.$r.','.$g.','.$b.'); color: white;">';
+            $html .= '<th>Description</th><th>Quantity</th><th>Unit Price</th><th>Amount</th></tr>';
             
-            // Table Header
-            $pdf->Cell(90, 8, 'Description', 1, 0, 'L', true);
-            $pdf->Cell(30, 8, 'Quantity', 1, 0, 'C', true);
-            $pdf->Cell(30, 8, 'Unit Price', 1, 0, 'R', true);
-            $pdf->Cell(30, 8, 'Amount', 1, 1, 'R', true);
-            
-            // Reset text color
-            $pdf->SetTextColor(0, 0, 0);
-            
-            // Table Content
-            $pdf->SetFont('helvetica', '', 10);
             foreach ($invoice->items as $item) {
-                $pdf->Cell(90, 8, $item->description, 1, 0, 'L');
-                $pdf->Cell(30, 8, $item->quantity, 1, 0, 'C');
-                $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($item->unit_price, 2), 1, 0, 'R');
-                $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($item->amount, 2), 1, 1, 'R');
+                $html .= '<tr>';
+                $html .= '<td>' . $item->description . '</td>';
+                $html .= '<td align="center">' . $item->quantity . '</td>';
+                $html .= '<td align="right">' . number_format($item->unit_price, 2) . ' ' . $invoice->currency . '</td>';
+                $html .= '<td align="right">' . number_format($item->amount, 2) . ' ' . $invoice->currency . '</td>';
+                $html .= '</tr>';
             }
 
-            // Total
-            $pdf->SetFont('helvetica', 'B', 10);
-            $pdf->Cell(150, 8, 'Total:', 1, 0, 'R', true);
-            $pdf->Cell(30, 8, $invoice->currency . ' ' . number_format($invoice->amount, 2), 1, 1, 'R', true);
+            // Totals section
+            $html .= '<tr class="total-section">';
+            $html .= '<td colspan="3" align="right"><strong>Total:</strong></td>';
+            $html .= '<td align="right"><strong>' . number_format($invoice->amount, 2) . ' ' . $invoice->currency . '</strong></td>';
+            $html .= '</tr>';
+            
+            if ($invoice->paid_amount > 0) {
+                $html .= '<tr>';
+                $html .= '<td colspan="3" align="right">Paid Amount:</td>';
+                $html .= '<td align="right">' . number_format($invoice->paid_amount, 2) . ' ' . $invoice->currency . '</td>';
+                $html .= '</tr>';
+                
+                $html .= '<tr>';
+                $html .= '<td colspan="3" align="right"><strong>Balance Due:</strong></td>';
+                $html .= '<td align="right"><strong>' . number_format($invoice->amount - $invoice->paid_amount, 2) . ' ' . $invoice->currency . '</strong></td>';
+                $html .= '</tr>';
+            }
+            
+            $html .= '</table>';
 
+            // Add notes if any
             if ($invoice->notes) {
-                $pdf->Ln(10);
-                $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->Cell(0, 8, 'Notes:', 0, 1, 'L');
-                $pdf->SetFont('helvetica', '', 10);
-                $pdf->MultiCell(0, 5, $invoice->notes, 0, 'L');
+                $html .= '<div style="margin-top: 20px;">';
+                $html .= '<strong style="color: rgb('.$r.','.$g.','.$b.');">Notes:</strong><br>';
+                $html .= $invoice->notes;
+                $html .= '</div>';
             }
 
-            // Send email with PDF attachment
-            Mail::send('emails.invoice', ['invoice' => $invoice], function ($message) use ($invoice, $pdf) {
-                $message->to($invoice->customer->email, $invoice->customer->name)
-                    ->subject('Invoice #' . $invoice->invoice_number . ' from ' . $invoice->business->business_name)
-                    ->attachData($pdf->Output('', 'S'), 'Invoice_' . $invoice->invoice_number . '.pdf');
-            });
+            // Write HTML to PDF
+            $pdf->writeHTML($html, true, false, true, false, '');
+
+            // Stream the PDF directly
+            return response()->streamDownload(
+                function () use ($pdf) {
+                    echo $pdf->Output('', 'S');
+                },
+                "invoice-{$invoice->invoice_number}.pdf",
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0'
+                ]
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Invoice download failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Failed to download invoice'
+            ], 500);
+        }
+    }
+
+    public function send($id)
+    {
+        try {
+            $invoice = BusinessInvoice::with(['items', 'business', 'customer'])
+                ->findOrFail($id);
+
+            // Queue the email sending process
+            SendInvoiceEmail::dispatch($invoice);
+            
+            // Update status immediately
+            $invoice->update([
+                'status' => 'sent',
+                'sent_at' => now()
+            ]);
 
             return response()->json([
                 'message' => 'Invoice sent successfully'
             ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to send invoice:', [
-                'id' => $id,
+            Log::error('Invoice sending failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
-                'message' => 'Failed to send invoice',
-                'error' => $e->getMessage()
+                'message' => 'Failed to send invoice'
             ], 500);
         }
     }
