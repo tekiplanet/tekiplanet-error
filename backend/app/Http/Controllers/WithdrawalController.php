@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use App\Mail\WithdrawalRequestMail;
+use Illuminate\Support\Facades\Mail;
 
 class WithdrawalController extends Controller
 {
@@ -203,6 +205,11 @@ class WithdrawalController extends Controller
 
                 // Update user's wallet balance
                 $user->decrement('wallet_balance', $request->amount);
+
+                // Send email notification if enabled
+                if ($user->email_notifications) {
+                    Mail::to($user->email)->send(new WithdrawalRequestMail($transaction, $bankAccount));
+                }
 
                 DB::commit();
 
