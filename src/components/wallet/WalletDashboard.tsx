@@ -62,6 +62,7 @@ import axios from 'axios';
 import { Calendar } from "@/components/ui/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { settingsService } from "@/services/settingsService";
+import WithdrawalModal from './WithdrawalModal';
 
 // Create a transaction service for API calls
 const transactionService = {
@@ -208,6 +209,7 @@ const DateRangePicker = ({
 export default function WalletDashboard() {
   const user = useAuthStore(state => state.user);
   const { addBalance, addTransaction } = useWalletStore();
+  const [step, setStep] = useState<'amount' | 'account' | 'confirm'>('amount');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,6 +218,7 @@ export default function WalletDashboard() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [showFundWalletModal, setShowFundWalletModal] = useState(false);
   const [showExportStatementModal, setShowExportStatementModal] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   
   // New state for pagination
   const [visibleTransactions, setVisibleTransactions] = useState(10);
@@ -455,74 +458,13 @@ export default function WalletDashboard() {
             <Upload className="h-4 w-4 md:mr-2" />
             <span className="hidden md:inline">Fund Wallet</span>
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="text-white flex-1 md:flex-none">
-                <Download className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Export</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent 
-              aria-describedby="export-statement-description"
-            >
-              <DialogHeader>
-                <DialogTitle>Export Transaction Statement</DialogTitle>
-              </DialogHeader>
-              <div id="export-statement-description" className="space-y-4">
-                <div className="space-y-4">
-                  <DateRangePicker 
-                    value={dateRange}
-                    onChange={setDateRange}
-                  />
-
-                  <div className="flex space-x-2 justify-center">
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => {
-                        const today = new Date();
-                        setDateRange({
-                          from: subDays(today, 7),
-                          to: today
-                        });
-                      }}
-                    >
-                      Last 7 Days
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => {
-                        const today = new Date();
-                        setDateRange({
-                          from: subDays(today, 30),
-                          to: today
-                        });
-                      }}
-                    >
-                      Last 30 Days
-                    </Button>
-                  </div>
-
-                  <div className="w-full md:w-auto">
-                    <Button 
-                      onClick={handleStatementExport} 
-                      disabled={!dateRange?.from || !dateRange?.to || isStatementExporting}
-                      className="w-full"
-                    >
-                      {isStatementExporting ? 'Exporting...' : 'Export Statement'}
-                    </Button>
-                  </div>
-
-                  {statementExportError && (
-                    <div className="text-red-500 text-sm mt-2 text-center">
-                      {statementExportError}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            className="text-white flex-1 md:flex-none" 
+            onClick={() => setShowWithdrawalModal(true)}
+          >
+            <Download className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Withdraw</span>
+          </Button>
         </div>
       </div>
 
@@ -979,6 +921,10 @@ export default function WalletDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+      <WithdrawalModal 
+        open={showWithdrawalModal} 
+        onOpenChange={setShowWithdrawalModal}
+      />
     </div>
   );
 }

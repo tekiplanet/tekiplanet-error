@@ -43,6 +43,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\BusinessSettingsController;
 use App\Http\Controllers\ProfessionalSettingsController;
+use App\Http\Controllers\WithdrawalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -349,4 +350,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/settings/business/logo', [BusinessSettingsController::class, 'updateLogo']);
+});
+
+// Withdrawal Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/banks', [WithdrawalController::class, 'getBanks']);
+    Route::post('/bank-accounts/verify', [WithdrawalController::class, 'verifyAccount']);
+    Route::post('/bank-accounts', [WithdrawalController::class, 'addBankAccount']);
+    Route::get('/bank-accounts', [WithdrawalController::class, 'getBankAccounts']);
+    Route::post('/bank-accounts/default', [WithdrawalController::class, 'setDefaultAccount']);
+    Route::post('/withdraw', [WithdrawalController::class, 'withdraw']);
 });
