@@ -53,6 +53,8 @@ interface ActivityParams {
   to?: Date;
 }
 
+
+
 interface CreateInvoiceDto {
   invoice_number?: string;
   due_date: Date;
@@ -203,6 +205,12 @@ export const businessService = {
       throw error;
     }
   },
+
+  deleteCustomer: async (id: string) => {
+    const { data } = await apiClient.delete(`/business/customers/${id}`);
+    return data;
+  },
+    
   async createCustomer(data: CreateCustomerDto) {
     try {
       const response = await apiClient.post('/business/customers', data);
