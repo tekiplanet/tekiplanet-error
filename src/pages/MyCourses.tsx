@@ -743,8 +743,7 @@ export default function MyCourses() {
                                 <div key={installment.id} className="p-3 rounded-xl bg-muted/50">
                                   <div className="flex justify-between items-center mb-2">
                                     <div>
-                                      <p className="text-sm font-medium">Installment {index + 1}</p>
-                                      <p className="text-xs text-muted-foreground">
+                                    <p className="text-sm font-medium">Installment {installment.order}</p>                                      <p className="text-xs text-muted-foreground">
                                         Due: {new Date(installment.due_date).toLocaleDateString('en-US', { 
                                           month: 'long', 
                                           day: 'numeric' 

@@ -210,6 +210,7 @@ class EnrollmentController extends Controller
                         'due_date' => $installment->due_date,
                         'status' => $installment->status,
                         'paid_at' => $installment->paid_at,
+                        'order' => $installment->order ?? 0,
                     ];
                 }),
             ];
@@ -764,6 +765,7 @@ class EnrollmentController extends Controller
                         'due_date' => $firstInstallment->due_date,
                         'status' => $firstInstallment->status,
                         'paid_at' => $firstInstallment->paid_at,
+                        'order' => $firstInstallment->order,
                     ],
                     [
                         'id' => $secondInstallment->id,
@@ -771,6 +773,7 @@ class EnrollmentController extends Controller
                         'due_date' => $secondInstallment->due_date,
                         'status' => $secondInstallment->status,
                         'paid_at' => $secondInstallment->paid_at,
+                        'order' => $secondInstallment->order,
                     ]
                 ]
             ]);
@@ -878,6 +881,7 @@ class EnrollmentController extends Controller
                     'due_date' => $installment->due_date,
                     'status' => $installment->status,
                     'paid_at' => $installment->paid_at,
+                    'order' => $installment->order,
                 ],
                 'enrollment' => [
                     'id' => $enrollment->id,
@@ -964,7 +968,16 @@ class EnrollmentController extends Controller
                     'progress' => $enrollment->progress,
                     'enrolled_at' => $enrollment->enrolled_at,
                 ],
-                'installments' => $enrollment->installments ?? []
+                'installments' => $enrollment->installments->map(function($installment) {
+                    return [
+                        'id' => $installment->id,
+                        'amount' => $installment->amount,
+                        'due_date' => $installment->due_date,
+                        'status' => $installment->status,
+                        'paid_at' => $installment->paid_at,
+                        'order' => $installment->order,
+                    ];
+                })
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching course details from enrollment', [
@@ -1020,7 +1033,16 @@ class EnrollmentController extends Controller
             // Get installments for this enrollment
             $installments = Installment::where('enrollment_id', $enrollment->id)->get();
     
-            return response()->json($installments);
+            return response()->json($installments->map(function($installment) {
+                return [
+                    'id' => $installment->id,
+                    'amount' => $installment->amount,
+                    'due_date' => $installment->due_date,
+                    'status' => $installment->status,
+                    'paid_at' => $installment->paid_at,
+                    'order' => $installment->order,
+                ];
+            }));
         } catch (\Exception $e) {
             Log::error('Error fetching course installments: ' . $e->getMessage());
             return response()->json(['message' => 'Error fetching installments'], 500);
