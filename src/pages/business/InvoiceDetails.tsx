@@ -488,8 +488,16 @@ export default function InvoiceDetails() {
 
             <TabsContent value="payments" className="space-y-4 mt-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Payment History</CardTitle>
+                  <Button 
+                    size="sm"
+                    onClick={() => setIsPaymentFormOpen(true)}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Record Payment
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   {!invoice.payments?.length ? (

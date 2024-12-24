@@ -363,9 +363,39 @@ class BusinessInvoiceController extends Controller
 
             $invoice = BusinessInvoice::findOrFail($id);
             
+            Log::info('Starting payment recording', [
+                'invoice_id' => $id,
+                'amount' => $request->amount,
+                'currency' => $invoice->currency
+            ]);
+
+            try {
+                // Convert amount to NGN using exchange rate API
+                $convertedAmount = $this->currencyService->convertToNGN(
+                    $request->amount,
+                    $invoice->currency
+                );
+
+                Log::info('Payment conversion successful', [
+                    'original_amount' => $request->amount,
+                    'currency' => $invoice->currency,
+                    'converted_amount_ngn' => $convertedAmount
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Currency conversion failed', [
+                    'error' => $e->getMessage(),
+                    'invoice_id' => $id,
+                    'amount' => $request->amount,
+                    'currency' => $invoice->currency
+                ]);
+                throw $e;
+            }
+
             $payment = BusinessInvoicePayment::create([
                 'invoice_id' => $invoice->id,
                 'amount' => $request->amount,
+                'currency' => $invoice->currency,
+                'converted_amount' => $convertedAmount,
                 'payment_method' => $request->payment_method,
                 'payment_date' => now(),
                 'notes' => $request->notes
@@ -394,7 +424,7 @@ class BusinessInvoiceController extends Controller
             ]);
             
             return response()->json([
-                'message' => 'Failed to record payment'
+                'message' => 'Failed to record payment: ' . $e->getMessage()
             ], 500);
         }
     }

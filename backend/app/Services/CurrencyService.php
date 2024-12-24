@@ -4,41 +4,87 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CurrencyService
 {
     protected $apiKey;
-    protected $baseUrl = 'https://v6.exchangerate-api.com/v6/';
+    protected $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = config('services.exchangerate.key');
+        $this->apiKey = env('EXCHANGE_RATE_API_KEY');
+        $this->baseUrl = "https://v6.exchangerate-api.com/v6/{$this->apiKey}/latest/";
     }
 
     public function convertToNGN($amount, $fromCurrency)
     {
+        Log::info('Starting currency conversion', [
+            'amount' => $amount,
+            'from_currency' => $fromCurrency,
+            'api_key_exists' => !empty($this->apiKey)
+        ]);
+
         if ($fromCurrency === 'NGN') {
             return $amount;
         }
 
-        $rate = $this->getExchangeRate($fromCurrency, 'NGN');
-        return $amount * $rate;
-    }
+        try {
+            $cacheKey = "exchange_rate_{$fromCurrency}_NGN";
 
-    protected function getExchangeRate($from, $to)
-    {
-        $cacheKey = "exchange_rate_{$from}_{$to}";
+            // Get exchange rate from cache or API
+            $rate = Cache::remember($cacheKey, 3600, function () use ($fromCurrency) {
+                Log::info('Fetching fresh exchange rate', [
+                    'url' => "{$this->baseUrl}{$fromCurrency}",
+                    'from_currency' => $fromCurrency
+                ]);
 
-        // Cache the rate for 24 hours to avoid hitting API limits
-        return Cache::remember($cacheKey, 60 * 60 * 24, function () use ($from, $to) {
-            $response = Http::get("{$this->baseUrl}{$this->apiKey}/pair/{$from}/{$to}");
-            
-            if ($response->successful()) {
-                return $response->json()['conversion_rate'];
+                $response = Http::get("{$this->baseUrl}{$fromCurrency}");
+                
+                Log::info('API Response', [
+                    'status' => $response->status(),
+                    'body' => $response->json()
+                ]);
+
+                if (!$response->successful()) {
+                    throw new \Exception('Failed to fetch exchange rate: ' . $response->body());
+                }
+
+                $data = $response->json();
+                $rate = $data['conversion_rates']['NGN'] ?? null;
+
+                Log::info('Exchange rate fetched', [
+                    'rate' => $rate,
+                    'from_currency' => $fromCurrency
+                ]);
+
+                return $rate;
+            });
+
+            if (!$rate) {
+                throw new \Exception("Could not get exchange rate for {$fromCurrency}");
             }
 
-            // Fallback to 1 if API fails
-            return 1;
-        });
+            $convertedAmount = round($amount * $rate, 2);
+
+            Log::info('Currency conversion completed', [
+                'from_currency' => $fromCurrency,
+                'amount' => $amount,
+                'rate' => $rate,
+                'converted_amount' => $convertedAmount
+            ]);
+
+            return $convertedAmount;
+
+        } catch (\Exception $e) {
+            Log::error('Currency conversion failed:', [
+                'error' => $e->getMessage(),
+                'from_currency' => $fromCurrency,
+                'amount' => $amount,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            throw $e;
+        }
     }
 }
