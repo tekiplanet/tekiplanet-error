@@ -291,28 +291,47 @@ export default function BusinessDashboard() {
     select: (data) => data || [],
   });
 
-  const { data: profileData, isLoading: profileLoading } = useQuery({
+  const { data: profileData, isLoading: profileLoading, error } = useQuery({
     queryKey: ['business-profile'],
-    queryFn: businessService.getProfile,
-    retry: false
+    queryFn: businessService.checkProfile,
+    retry: false,
+    onError: (error) => {
+      console.error('Profile check error:', error);
+    }
   });
 
   const { data: metrics, isLoading: metricsLoading } = useQuery<BusinessMetrics>({
     queryKey: ['business-metrics'],
     queryFn: () => businessService.getMetrics(),
-    enabled: !!profileData?.has_profile,
-    select: (data: BusinessMetrics) => data
+    enabled: !!profileData?.profile?.id,
+    select: (data: BusinessMetrics) => data,
+    onError: (error) => {
+      console.error('Metrics error:', error);
+    }
+  });
+
+  console.log('Metrics Data:', {
+    metrics,
+    isLoading: metricsLoading,
+    enabled: !!profileData?.profile?.id
+  });
+
+  console.log('Profile Data:', {
+    profileData,
+    hasProfile: profileData?.has_profile,
+    profile: profileData?.profile,
+    status: profileData?.profile?.status
   });
 
   if (profileLoading) {
     return <LoadingSkeleton />;
   }
 
-  if (!profileData) {
+  if (!profileData?.has_profile) {
     return <NoBusinessProfile />;
   }
 
-  if (profileData.status === 'inactive') {
+  if (profileData?.profile?.status === 'inactive') {
     return <InactiveBusinessProfile />;
   }
 
@@ -322,7 +341,7 @@ export default function BusinessDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12 md:h-16 md:w-16 border-2 border-primary rounded-2xl">
-            <AvatarImage src={profileData?.profile?.logo} />
+            <AvatarImage src={profileData?.profile?.logo_url} />
             <AvatarFallback>BP</AvatarFallback>
           </Avatar>
           <div>

@@ -17,13 +17,19 @@ class BusinessMetricsController extends Controller
 
     public function getMetrics(Request $request)
     {
+        Log::info('Metrics endpoint hit', [
+            'endpoint' => 'GET /business/metrics',
+            'user' => $request->user()->id
+        ]);
+
         try {
             // Get business profile ID for authenticated user
             $businessProfile = $request->user()->businessProfile;
 
             Log::info('Fetching metrics for business:', [
                 'user_id' => $request->user()->id,
-                'business_profile' => $businessProfile
+                'business_profile' => $businessProfile,
+                'business_id' => $businessProfile ? $businessProfile->id : null
             ]);
 
             if (!$businessProfile) {

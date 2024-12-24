@@ -46,16 +46,26 @@ class BusinessMetricsService
 
     protected function calculateMonthlyRevenue($businessId)
     {
+        Log::info('Calculating monthly revenue:', [
+            'business_id' => $businessId,
+            'month' => now()->month,
+            'year' => now()->year
+        ]);
+
         $businessInvoices = BusinessInvoice::where('business_id', $businessId)
             ->pluck('id');
+
+        Log::info('Found invoices:', [
+            'invoice_count' => $businessInvoices->count(),
+            'invoice_ids' => $businessInvoices
+        ]);
 
         $totalRevenue = BusinessInvoicePayment::whereIn('invoice_id', $businessInvoices)
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('converted_amount');
 
-        Log::info('Monthly revenue calculation:', [
-            'business_id' => $businessId,
+        Log::info('Revenue calculation result:', [
             'total_revenue' => $totalRevenue
         ]);
 
@@ -123,7 +133,17 @@ class BusinessMetricsService
 
     protected function getTotalCustomers($businessId)
     {
-        return BusinessCustomer::where('business_id', $businessId)->count();
+        Log::info('Getting total customers:', [
+            'business_id' => $businessId
+        ]);
+
+        $count = BusinessCustomer::where('business_id', $businessId)->count();
+
+        Log::info('Customer count:', [
+            'total_customers' => $count
+        ]);
+
+        return $count;
     }
 
     protected function getCustomersData($businessId)
@@ -143,7 +163,23 @@ class BusinessMetricsService
 
     protected function getRecentActivities($businessId, $limit = 20)
     {
-        Log::info('Fetching recent activities for business:', ['business_id' => $businessId]);
+        Log::info('Getting recent activities:', [
+            'business_id' => $businessId,
+            'limit' => $limit
+        ]);
+
+        // Log counts before processing
+        $customerCount = BusinessCustomer::where('business_id', $businessId)->count();
+        $invoiceCount = BusinessInvoice::where('business_id', $businessId)->count();
+        $paymentCount = BusinessInvoicePayment::whereHas('invoice', function($query) use ($businessId) {
+            $query->where('business_id', $businessId);
+        })->count();
+
+        Log::info('Activity counts:', [
+            'customers' => $customerCount,
+            'invoices' => $invoiceCount,
+            'payments' => $paymentCount
+        ]);
 
         // Get recent customers
         $customers = BusinessCustomer::where('business_id', $businessId)
