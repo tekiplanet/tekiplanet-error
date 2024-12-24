@@ -446,14 +446,6 @@ class EnrollmentController extends Controller
             ], 400);
         }
 
-        // Check if installment is already paid
-        if ($installment->status === 'paid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This installment has already been paid'
-            ], 400);
-        }
-
         // Start database transaction
         DB::beginTransaction();
 
@@ -732,7 +724,8 @@ class EnrollmentController extends Controller
                 'amount' => $halfPrice,
                 'due_date' => now()->addWeeks(1),
                 'status' => 'pending',
-                'paid_at' => null
+                'paid_at' => null,
+                'order' => 1
             ]);
 
             // Create second installment (pending)
@@ -742,7 +735,8 @@ class EnrollmentController extends Controller
                 'amount' => $halfPrice,
                 'due_date' => now()->addMonths(1),
                 'status' => 'pending',
-                'paid_at' => null
+                'paid_at' => null,
+                'order' => 2
             ]);
 
             // Update enrollment payment status

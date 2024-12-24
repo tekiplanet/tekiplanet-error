@@ -55,6 +55,7 @@ interface EnrolledCourse {
     due_date: string;
     status: string;
     paid_at: string | null;
+    order: number;  // Add this line
   }[];
   nextLesson: string;
   nextDeadline: string;
@@ -728,7 +729,7 @@ export default function MyCourses() {
                       {enrollment.installments && enrollment.installments.length > 0 ? (
                         <div className="space-y-3">
                           {[...enrollment.installments]
-                            .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                          .sort((a, b) => (a.order || 0) - (b.order || 0))
                             .map((installment, index) => {
                               const sortedInstallments = [...enrollment.installments]
                                 .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());

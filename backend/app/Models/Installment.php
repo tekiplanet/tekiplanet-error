@@ -16,7 +16,8 @@ class Installment extends Model
         'amount', 
         'due_date', 
         'status', 
-        'paid_at'
+        'paid_at',
+        'order'
     ];
 
     protected $dates = [
