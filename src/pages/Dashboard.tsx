@@ -563,15 +563,6 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                       </div>
                     </PopoverContent>
                   </Popover>
-
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={sendTestNotification}
-                    className="ml-2"
-                  >
-                    Test
-                  </Button>
                 </div>
               </div>
             </div>
@@ -1011,16 +1002,6 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   </div>
                 </PopoverContent>
               </Popover>
-
-              {/* Add Test Notification Button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={sendTestNotification}
-                className="ml-2"
-              >
-                Test
-              </Button>
 
               {/* Cart Icon */}
               <Button 
