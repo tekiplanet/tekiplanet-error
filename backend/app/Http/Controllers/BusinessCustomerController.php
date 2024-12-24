@@ -287,7 +287,19 @@ class BusinessCustomerController extends Controller
                 ->select('id', 'name', 'email', 'phone', 'currency')
                 ->orderBy('name')
                 ->limit(10)
-                ->get();
+                ->get()
+                ->map(function ($customer) {
+                    return [
+                        'id' => $customer->id,
+                        'name' => $customer->name,
+                        'email' => $customer->email,
+                        'phone' => $customer->phone,
+                        'currency' => $customer->currency,
+                        'total_spent' => $customer->getTotalSpent(),
+                        'tags' => $customer->tags,
+                        'created_at' => $customer->created_at
+                    ];
+                });
 
             return response()->json($customers->toArray());
 

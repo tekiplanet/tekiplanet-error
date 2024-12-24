@@ -160,21 +160,27 @@ export default function Customers() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: customers, isLoading } = useQuery<Customer[]>({
-    queryKey: ['business-customers'],
+    queryKey: ['business-customers', searchQuery],
     queryFn: async () => {
-      console.log('Fetching all customers...');
-      const response = await businessService.getCustomers({});
-      console.log('Response from getCustomers:', response);
+      const response = await businessService.getCustomers({ 
+        search: searchQuery || undefined
+      });
       return response;
     },
     initialData: [],
-    select: (data) => {
-      console.log('Raw customers data:', data);
-      const selectedData = data || [];
-      console.log('Selected customers data:', selectedData);
-      return selectedData;
-    },
+    select: (data) => data || [],
   });
+
+  const filteredCustomers = React.useMemo(() => {
+    if (!searchQuery) return customers;
+    
+    const query = searchQuery.toLowerCase();
+    return customers?.filter(customer => 
+      customer.name.toLowerCase().includes(query) ||
+      customer.email.toLowerCase().includes(query) ||
+      customer.phone?.toLowerCase().includes(query)
+    );
+  }, [customers, searchQuery]);
 
   const customersThisMonth = React.useMemo(() => {
     if (!customers) return 0;
@@ -263,7 +269,7 @@ export default function Customers() {
       </div>
 
       {/* Customer List or Empty State */}
-      {isLoading ? (
+      {isLoading || (searchQuery && customers?.length !== filteredCustomers?.length) ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="p-4 rounded-lg border animate-pulse">
@@ -290,9 +296,13 @@ export default function Customers() {
         </div>
       ) : !customers || customers.length === 0 ? (
         <EmptyState onAddCustomer={handleAddCustomer} />
+      ) : filteredCustomers.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No customers found matching "{searchQuery}"</p>
+        </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 px-0.5">
-          {customers.map((customer) => (
+          {filteredCustomers.map((customer) => (
             <CustomerCard 
               key={customer.id} 
               customer={customer} 
