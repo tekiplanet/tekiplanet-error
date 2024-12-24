@@ -285,7 +285,10 @@ export default function BusinessDashboard() {
   // Query for searching customers
   const { data: customers, isLoading: customersLoading } = useQuery({
     queryKey: ['customer-search', customerSearch],
-    queryFn: () => businessService.searchCustomers(customerSearch),
+    queryFn: async () => {
+      const response = await businessService.getCustomers({ search: customerSearch });
+      return response;
+    },
     enabled: customerSearch.length >= 3,
     initialData: [],
     select: (data) => data || [],
@@ -302,12 +305,9 @@ export default function BusinessDashboard() {
 
   const { data: metrics, isLoading: metricsLoading } = useQuery<BusinessMetrics>({
     queryKey: ['business-metrics'],
-    queryFn: () => businessService.getMetrics(),
+    queryFn: businessService.getMetrics,
     enabled: !!profileData?.profile?.id,
-    select: (data: BusinessMetrics) => data,
-    onError: (error) => {
-      console.error('Metrics error:', error);
-    }
+    select: (data) => data as BusinessMetrics,
   });
 
   console.log('Metrics Data:', {
@@ -424,10 +424,11 @@ export default function BusinessDashboard() {
                 <div className="p-4 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                 </div>
-              ) : customers.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No customers found.
-                </p>
+              ) : !customers || customers.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  <p>No customers found.</p>
+                  <p className="text-xs mt-1">Search query: "{customerSearch}"</p>
+                </div>
               ) : (
                 <ScrollArea className="h-[300px] w-full rounded-md border">
                   <div className="p-4 space-y-2">

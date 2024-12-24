@@ -161,8 +161,19 @@ export default function Customers() {
 
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ['business-customers'],
-    queryFn: businessService.getCustomers,
+    queryFn: async () => {
+      console.log('Fetching all customers...');
+      const response = await businessService.getCustomers({});
+      console.log('Response from getCustomers:', response);
+      return response;
+    },
     initialData: [],
+    select: (data) => {
+      console.log('Raw customers data:', data);
+      const selectedData = data || [];
+      console.log('Selected customers data:', selectedData);
+      return selectedData;
+    },
   });
 
   const customersThisMonth = React.useMemo(() => {

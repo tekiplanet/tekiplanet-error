@@ -155,5 +155,19 @@ export const businessService = {
       console.error('Error fetching customer:', error);
       throw error;
     }
+  },
+  getCustomers: async ({ search }: { search?: string } = {}) => {
+    try {
+      const response = await apiClient.get(search 
+        ? '/business/customers/search'  // Use search endpoint if search param exists
+        : '/business/customers'         // Use list endpoint if no search param
+      , {
+        params: search ? { search } : undefined
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      throw error;
+    }
   }
 }; 
