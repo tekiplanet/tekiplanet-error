@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { useAuthStore } from '@/store/useAuthStore';
 import { twoFactorService } from '@/services/twoFactorService';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
+
 import {
   Dialog,
   DialogContent,
@@ -127,7 +129,7 @@ export function TwoFactorSettings() {
 
       {/* Enable 2FA Dialog */}
       <Dialog open={isEnabling2FA} onOpenChange={setIsEnabling2FA}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
             <DialogDescription>
@@ -136,32 +138,20 @@ export function TwoFactorSettings() {
           </DialogHeader>
 
           {setupData && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex justify-center">
-                <img
-                  src={`https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(setupData.qr_code_url)}`}
-                  alt="QR Code"
-                  className="border rounded-lg"
+                <QRCodeSVG
+                  value={setupData.qr_code_url}
+                  size={200}
+                  level="H"
+                  includeMargin
+                  className="border rounded-lg bg-white p-2"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Manual Entry Code</Label>
-                <p className="font-mono text-sm bg-muted p-2 rounded">{setupData.secret}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Recovery Codes</Label>
-                <Card className="p-4">
-                  <div className="space-y-1">
-                    {setupData.recovery_codes.map((code, index) => (
-                      <p key={index} className="font-mono text-sm">{code}</p>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Save these recovery codes in a secure place. You can use them to access your account if you lose your authenticator device.
-                  </p>
-                </Card>
+                <p className="font-mono text-sm bg-muted p-2 rounded break-all">{setupData.secret}</p>
               </div>
 
               <div className="space-y-2">
@@ -171,6 +161,7 @@ export function TwoFactorSettings() {
                   onChange={(e) => setVerificationCode(e.target.value)}
                   placeholder="Enter 6-digit code"
                   maxLength={6}
+                  className="w-full"
                 />
               </div>
 
@@ -181,6 +172,23 @@ export function TwoFactorSettings() {
               >
                 Verify and Enable
               </Button>
+
+              <div className="space-y-2">
+                <Label>Recovery Codes</Label>
+                <Card className="p-4">
+                  <div className="space-y-1">
+                    {setupData.recovery_codes.map((code, index) => (
+                      <p key={index} className="font-mono text-sm">{code}</p>
+                    ))}
+                  </div>
+                  <div className="flex items-start gap-2 mt-3 text-sm text-muted-foreground">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                      Save these recovery codes in a secure place. You can use them to access your account if you lose your authenticator device.
+                    </p>
+                  </div>
+                </Card>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -188,7 +196,7 @@ export function TwoFactorSettings() {
 
       {/* Disable 2FA Dialog */}
       <Dialog open={isDisabling2FA} onOpenChange={setIsDisabling2FA}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Disable Two-Factor Authentication</DialogTitle>
             <DialogDescription>
