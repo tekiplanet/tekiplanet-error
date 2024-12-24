@@ -144,14 +144,14 @@ class User extends Authenticatable
                 }
 
                 // Log debugging information
-                Log::info('Avatar accessor:', [
-                    'raw_value' => $value,
-                    'app_url' => config('app.url'),
-                    'full_path' => storage_path('app/public/' . $value),
-                    'exists' => Storage::disk('public')->exists($value),
-                    'public_path' => public_path('storage/' . $value),
-                    'file_exists' => file_exists(public_path('storage/' . $value))
-                ]);
+                // Log::info('Avatar accessor:', [
+                //     'raw_value' => $value,
+                //     'app_url' => config('app.url'),
+                //     'full_path' => storage_path('app/public/' . $value),
+                //     'exists' => Storage::disk('public')->exists($value),
+                //     'public_path' => public_path('storage/' . $value),
+                //     'file_exists' => file_exists(public_path('storage/' . $value))
+                // ]);
 
                 // Check both storage and public paths
                 if (!Storage::disk('public')->exists($value) && !file_exists(public_path('storage/' . $value))) {

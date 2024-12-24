@@ -12,7 +12,6 @@ class BroadcastServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Log::info('Registering broadcast routes');
         
         Broadcast::routes([
             'prefix' => 'api',

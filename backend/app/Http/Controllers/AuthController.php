@@ -118,14 +118,14 @@ class AuthController extends Controller
     {
         $user = $request->user()->load(['professional', 'business_profile']);
         
-        Log::info('User data debug:', [
-            'user_id' => $user->id,
-            'professional' => $user->professional?->toArray(),
-            'business_profile' => $user->business_profile?->toArray(),
-            'has_professional' => $user->professional !== null,
-            'has_business' => $user->business_profile !== null,
-            'two_factor_enabled' => $user->two_factor_enabled
-        ]);
+        // Log::info('User data debug:', [
+        //     'user_id' => $user->id,
+        //     'professional' => $user->professional?->toArray(),
+        //     'business_profile' => $user->business_profile?->toArray(),
+        //     'has_professional' => $user->professional !== null,
+        //     'has_business' => $user->business_profile !== null,
+        //     'two_factor_enabled' => $user->two_factor_enabled
+        // ]);
 
         // Return user data with professional profile
         return response()->json($user->makeVisible([

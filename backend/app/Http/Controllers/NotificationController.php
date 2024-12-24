@@ -80,10 +80,6 @@ class NotificationController extends Controller
                 'unread_count' => $unreadCount
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error deleting notification:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             return response()->json([
                 'error' => 'Failed to delete notification',
