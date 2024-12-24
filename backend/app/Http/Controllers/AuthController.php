@@ -116,12 +116,14 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        $user = $request->user()->load(['professional', 'businessProfile']);
+        $user = $request->user()->load(['professional', 'business_profile']);
         
         Log::info('User data debug:', [
             'user_id' => $user->id,
             'professional' => $user->professional?->toArray(),
+            'business_profile' => $user->business_profile?->toArray(),
             'has_professional' => $user->professional !== null,
+            'has_business' => $user->business_profile !== null,
             'two_factor_enabled' => $user->two_factor_enabled
         ]);
 
@@ -134,7 +136,7 @@ class AuthController extends Controller
             'dark_mode',
             'wallet_balance',
             'professional',
-            'businessProfile'
+            'business_profile'
         ]));
     }
 }

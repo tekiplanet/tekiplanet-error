@@ -17,6 +17,15 @@ interface RegisterData {
   type: 'student' | 'business' | 'professional';
 }
 
+interface BusinessProfile {
+  status: string;
+  company_name?: string;
+  company_size?: string;
+  industry?: string;
+  website?: string;
+  description?: string;
+}
+
 interface UserData {
   id: number;
   username: string;
@@ -31,6 +40,7 @@ interface UserData {
   push_notifications?: boolean;
   marketing_notifications?: boolean;
   profile_visibility?: 'public' | 'private';
+  business_profile?: BusinessProfile;
 }
 
 interface User {

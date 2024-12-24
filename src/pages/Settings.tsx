@@ -1430,14 +1430,8 @@ const Settings = () => {
   // Add this before the settingsGroups definition
   console.log('Settings Debug (Detailed):', {
     fullUser: user,
-    rawBusinessProfile: user?.business_profile,
-    camelBusinessProfile: user?.businessProfile,
-    businessProfileCheck: {
-      snakeCase: Boolean(user?.business_profile?.status === 'active'),
-      camelCase: Boolean(user?.businessProfile?.status === 'active'),
-      rawStatus: user?.business_profile?.status,
-      rawCamelStatus: user?.businessProfile?.status
-    },
+    businessProfile: user?.business_profile,
+    businessProfileStatus: user?.business_profile?.status,
     showCondition: Boolean(user?.business_profile?.status === 'active')
   });
 
@@ -1484,7 +1478,7 @@ const Settings = () => {
           component: <BusinessProfileForm />
         }
       ],
-      show: Boolean(user?.businessProfile?.status === 'active')
+      show: Boolean(user?.business_profile?.status === 'active')
     },
     {
       id: 'professional',
