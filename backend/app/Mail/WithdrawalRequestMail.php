@@ -14,11 +14,19 @@ class WithdrawalRequestMail extends Mailable
 
     public $transaction;
     public $bankAccount;
+    public $formattedAmount;
 
     public function __construct(Transaction $transaction, BankAccount $bankAccount)
     {
         $this->transaction = $transaction;
         $this->bankAccount = $bankAccount;
+        $this->formattedAmount = $this->formatAmount($transaction->amount);
+    }
+
+    protected function formatAmount($amount, $currency = 'NGN') 
+    {
+        $symbol = '₦';
+        return $symbol . number_format($amount, 2);
     }
 
     public function build()

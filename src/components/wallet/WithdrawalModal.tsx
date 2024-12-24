@@ -284,13 +284,17 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
 
   const renderAccountStep = () => (
     <div className="space-y-6">
-      {bankAccounts?.length === 2 ? (
+      {/* Show saved bank accounts if any exist */}
+      {bankAccounts && bankAccounts.length > 0 && (
         <div className="space-y-4">
-          <Label>Select Bank Account</Label>
+          <Label>Select Saved Account</Label>
           {bankAccounts.map(account => (
             <div
               key={account.id}
-              onClick={() => setSelectedBankAccount(account.id)}
+              onClick={() => {
+                setSelectedBankAccount(account.id);
+                setStep('confirm');
+              }}
               className={cn(
                 "p-4 rounded-xl border-2 cursor-pointer transition-all",
                 "hover:border-primary/50",
@@ -318,128 +322,136 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
             </div>
           ))}
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Select Bank</Label>
-            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="w-full h-12 justify-between"
-                >
-                  {selectedBank
-                    ? banks?.data.find((bank) => bank.code === selectedBank)?.name
-                    : "Select bank..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-[calc(100vw-3rem)] sm:w-[380px] p-0"
-                side="bottom"
-                align="center"
-                sideOffset={5}
-                style={{ zIndex: 9999 }}
-              >
-                <div className="p-2 sticky top-0 bg-background border-b">
-                  <Input
-                    placeholder="Search banks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="max-h-[200px] overflow-y-auto">
-                  {filteredBanks.length === 0 ? (
-                    <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none text-muted-foreground">
-                      No banks found
-                    </div>
-                  ) : (
-                    filteredBanks.map((bank) => (
-                      <div
-                        key={bank.code}
-                        className={cn(
-                          "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer",
-                          selectedBank === bank.code && "bg-accent text-accent-foreground"
-                        )}
-                        onClick={() => {
-                          setSelectedBank(bank.code);
-                          setSearchQuery('');
-                          setIsPopoverOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedBank === bank.code ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {bank.name}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <Input
-            placeholder="Enter account number"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            maxLength={10}
-            className="h-12"
-          />
-
-          <Button 
-            className="w-full h-12" 
-            onClick={handleVerifyAccount}
-            disabled={verifyAccountMutation.isPending}
-          >
-            {verifyAccountMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : 'Verify Account'}
-          </Button>
-
-          {verifiedAccount && (
-            <div className="space-y-4">
-              <div className="p-4 bg-secondary/10 rounded-xl space-y-2">
-                <p className="text-sm font-medium">Verified Account Details:</p>
-                <div className="space-y-1 text-sm">
-                  <p>Name: {verifiedAccount.account_name}</p>
-                  <p>Bank: {verifiedAccount.bank_name}</p>
-                  <p>Number: {verifiedAccount.account_number}</p>
-                </div>
-              </div>
-              <Button 
-                className="w-full h-12" 
-                onClick={handleAddBankAccount}
-                disabled={addBankAccountMutation.isPending}
-              >
-                {addBankAccountMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding Account...
-                  </>
-                ) : 'Add Account & Continue'}
-              </Button>
-            </div>
-          )}
-        </div>
       )}
 
-      {selectedBankAccount && (
-        <Button 
-          className="w-full h-12" 
-          onClick={() => setStep('confirm')}
-        >
-          Continue
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
+      {/* Show option to add new account if less than 2 accounts */}
+      {(!bankAccounts || bankAccounts.length < 2) && (
+        <>
+          {bankAccounts && bankAccounts.length > 0 && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or add new account
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Bank</Label>
+              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full h-12 justify-between"
+                  >
+                    {selectedBank
+                      ? banks?.data.find((bank) => bank.code === selectedBank)?.name
+                      : "Select bank..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-[calc(100vw-3rem)] sm:w-[380px] p-0"
+                  side="bottom"
+                  align="center"
+                  sideOffset={5}
+                  style={{ zIndex: 9999 }}
+                >
+                  <div className="p-2 sticky top-0 bg-background border-b">
+                    <Input
+                      placeholder="Search banks..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {filteredBanks.length === 0 ? (
+                      <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none text-muted-foreground">
+                        No banks found
+                      </div>
+                    ) : (
+                      filteredBanks.map((bank) => (
+                        <div
+                          key={bank.code}
+                          className={cn(
+                            "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                            selectedBank === bank.code && "bg-accent text-accent-foreground"
+                          )}
+                          onClick={() => {
+                            setSelectedBank(bank.code);
+                            setSearchQuery('');
+                            setIsPopoverOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedBank === bank.code ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {bank.name}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <Input
+              placeholder="Enter account number"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              maxLength={10}
+              className="h-12"
+            />
+
+            <Button 
+              className="w-full h-12" 
+              onClick={handleVerifyAccount}
+              disabled={verifyAccountMutation.isPending}
+            >
+              {verifyAccountMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : 'Verify Account'}
+            </Button>
+
+            {verifiedAccount && (
+              <div className="space-y-4">
+                <div className="p-4 bg-secondary/10 rounded-xl space-y-2">
+                  <p className="text-sm font-medium">Verified Account Details:</p>
+                  <div className="space-y-1 text-sm">
+                    <p>Name: {verifiedAccount.account_name}</p>
+                    <p>Bank: {verifiedAccount.bank_name}</p>
+                    <p>Number: {verifiedAccount.account_number}</p>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full h-12" 
+                  onClick={handleAddBankAccount}
+                  disabled={addBankAccountMutation.isPending}
+                >
+                  {addBankAccountMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding Account...
+                    </>
+                  ) : 'Add Account & Continue'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -501,7 +513,7 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             {step === 'amount' && 'Withdraw Funds'}
@@ -509,7 +521,7 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
             {step === 'confirm' && 'Confirm Withdrawal'}
           </DialogTitle>
         </DialogHeader>
-        <div className="mt-4">
+        <div className="mt-4 flex-1 overflow-y-auto pr-2">
           {step === 'amount' && renderAmountStep()}
           {step === 'account' && renderAccountStep()}
           {step === 'confirm' && renderConfirmStep()}

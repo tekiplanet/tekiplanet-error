@@ -5,7 +5,7 @@ Dear {{ $transaction->user->first_name }},
 
 Your withdrawal request has been received and is being processed. Here are the details:
 
-**Amount:** {{ formatCurrency($transaction->amount) }}  
+**Amount:** {{ $formattedAmount }}  
 **Bank:** {{ $bankAccount->bank_name }}  
 **Account Number:** {{ $bankAccount->account_number }}  
 **Reference:** {{ $transaction->reference_number }}
