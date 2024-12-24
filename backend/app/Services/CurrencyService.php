@@ -14,7 +14,7 @@ class CurrencyService
     public function __construct()
     {
         $this->apiKey = env('EXCHANGE_RATE_API_KEY');
-        $this->baseUrl = "https://v6.exchangerate-api.com/v6/{$this->apiKey}/latest/";
+        $this->baseUrl = "https://v6.exchangerate-api.com/v6/{$this->apiKey}/pair/";
     }
 
     public function convertToNGN($amount, $fromCurrency)
@@ -34,12 +34,14 @@ class CurrencyService
 
             // Get exchange rate from cache or API
             $rate = Cache::remember($cacheKey, 3600, function () use ($fromCurrency) {
+                $url = "{$this->baseUrl}{$fromCurrency}/NGN";
+                
                 Log::info('Fetching fresh exchange rate', [
-                    'url' => "{$this->baseUrl}{$fromCurrency}",
+                    'url' => $url,
                     'from_currency' => $fromCurrency
                 ]);
 
-                $response = Http::get("{$this->baseUrl}{$fromCurrency}");
+                $response = Http::get($url);
                 
                 Log::info('API Response', [
                     'status' => $response->status(),
@@ -51,7 +53,7 @@ class CurrencyService
                 }
 
                 $data = $response->json();
-                $rate = $data['conversion_rates']['NGN'] ?? null;
+                $rate = $data['conversion_rate'] ?? null;
 
                 Log::info('Exchange rate fetched', [
                     'rate' => $rate,
