@@ -12,6 +12,13 @@ import { Loader2, ChevronRight, Bank, CreditCard, ArrowRight, Search } from 'luc
 import { formatCurrency } from '@/lib/utils';
 import { settingsService } from '@/services/settingsService';
 import { cn } from '@/lib/utils';
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 interface WithdrawalModalProps {
   open: boolean;
@@ -30,6 +37,8 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     bank_name: string;
     account_number: string;
   } | null>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const user = useAuthStore(state => state.user);
   const queryClient = useQueryClient();
@@ -52,6 +61,11 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     queryKey: ['bank-accounts'],
     queryFn: withdrawalService.getBankAccounts
   });
+
+  // Filter banks based on search query
+  const filteredBanks = banks?.data?.filter(bank => 
+    bank.name.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
   // Quick amounts based on user's balance
   const quickAmounts = [
@@ -114,11 +128,6 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     }
   });
 
-  // Filter banks based on search query
-  const filteredBanks = banks?.data.filter(bank => 
-    bank.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
-
   const handleVerifyAccount = () => {
     if (!accountNumber || !selectedBank) {
       toast.error('Please enter account number and select bank');
@@ -172,6 +181,16 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     }
 
     setStep('account');
+  };
+
+  const handleSearchClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the select from closing
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSearchQuery(e.target.value);
   };
 
   const renderAmountStep = () => (
@@ -269,29 +288,63 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Search banks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          <div className="space-y-2">
+            <Label>Select Bank</Label>
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full h-12 justify-between"
+                >
+                  {selectedBank
+                    ? banks?.data.find((bank) => bank.code === selectedBank)?.name
+                    : "Select bank..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <div className="p-2 sticky top-0 bg-background border-b">
+                  <Input
+                    placeholder="Search banks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="max-h-[200px] overflow-y-auto">
+                  {filteredBanks.length === 0 ? (
+                    <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none text-muted-foreground">
+                      No banks found
+                    </div>
+                  ) : (
+                    filteredBanks.map((bank) => (
+                      <div
+                        key={bank.code}
+                        className={cn(
+                          "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                          selectedBank === bank.code && "bg-accent text-accent-foreground"
+                        )}
+                        onClick={() => {
+                          setSelectedBank(bank.code);
+                          setSearchQuery('');
+                          setIsPopoverOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedBank === bank.code ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {bank.name}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-
-          <Select value={selectedBank} onValueChange={setSelectedBank}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select bank" />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredBanks.map(bank => (
-                <SelectItem key={bank.code} value={bank.code}>
-                  {bank.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
 
           <Input
             placeholder="Enter account number"
