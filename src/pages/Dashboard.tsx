@@ -165,11 +165,67 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
   };
 
   const menuItems: MenuItem[] = [
+    // MAIN NAVIGATION
     {
-      label: "Home",
-      path: "/dashboard",
-      icon: <Home className="w-4 h-4" />
+      label: "Wallet",
+      path: "/dashboard/wallet",
+      icon: <Wallet className="w-4 h-4" />
     },
+    {
+      label: "Services",
+      path: "/dashboard/services",
+      icon: <Briefcase className="w-4 h-4" />
+    },
+    {
+      label: 'IT Consulting',
+      path: '/dashboard/it-consulting',
+      icon: <BrainCircuit className="h-5 w-5" />
+    },
+    {
+      label: "Quotes",
+      path: "/dashboard/quotes",
+      icon: <FileText className="w-4 h-4" />
+    },
+
+    // LEARNING
+    {
+      label: "Academy",
+      path: "/dashboard/academy",
+      icon: <BookOpen className="w-4 h-4" />
+    },
+    {
+      label: "My Courses",
+      path: "/dashboard/academy/my-courses",
+      icon: <GraduationCap className="w-4 h-4" />
+    },
+
+    // BUSINESS
+    {
+      path: '/dashboard/business/customers',
+      label: 'Customers',
+      icon: <Users className="h-5 w-5" />,
+      show: user?.account_type === 'business'
+    },
+    {
+      label: "Projects",
+      path: "/dashboard/projects",
+      icon: <Server className="w-4 h-4" />
+    },
+
+    // PROFESSIONAL
+    {
+      path: '/dashboard/workstation/plans',
+      label: 'Workstation',
+      icon: <Building2 className="h-5 w-5" />,
+    },
+    {
+      label: "Hustles",
+      path: "/dashboard/hustles",
+      icon: <Briefcase className="h-4 w-4" />,
+      badge: "New"
+    },
+
+    // SHOP
     {
       label: "Store",
       path: "/dashboard/store",
@@ -185,63 +241,6 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
       label: "Orders",
       path: "/dashboard/orders",
       icon: <Package className="w-4 h-4" />
-    },
-    {
-      label: "Wallet",
-      path: "/dashboard/wallet",
-      icon: <Wallet className="w-4 h-4" />
-    },  
-    {
-      label: "Academy",
-      path: "/dashboard/academy",
-      icon: <BookOpen className="w-4 h-4" />
-    },
-    {
-      label: "My Courses",
-      path: "/dashboard/academy/my-courses",
-      icon: <GraduationCap className="w-4 h-4" />
-    }, 
-    {
-      label: "Services",
-      path: "/dashboard/services",
-      icon: <Briefcase className="w-4 h-4" />
-    },
-    {
-      label: "Quotes",
-      path: "/dashboard/quotes",
-      icon: <FileText className="w-4 h-4" />
-    },
-    {
-      label: "Projects",
-      path: "/dashboard/projects",
-      icon: <Server className="w-4 h-4" />
-    },
-    {
-      label: "Settings",
-      path: "/dashboard/settings",
-      icon: <Settings className="w-4 h-4" />
-    },
-    {
-      label: 'IT Consulting',
-      path: '/dashboard/it-consulting',
-      icon: <BrainCircuit className="h-5 w-5" />
-    },
-    {
-      path: '/dashboard/workstation/plans',
-      label: 'Workstation',
-      icon: <Building2 className="h-5 w-5" />,
-    },
-    {
-      label: "Hustles",
-      path: "/dashboard/hustles",
-      icon: <Briefcase className="h-4 w-4" />,
-      badge: "New"
-    },
-    {
-      path: '/dashboard/business/customers',
-      label: 'Customers',
-      icon: <Users className="h-5 w-5" />,
-      show: user?.account_type === 'business'
     }
   ];
 
@@ -376,7 +375,136 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
             {/* Scrollable Menu Items */}
             <div className="flex-1 overflow-y-auto">
               <nav className="flex-1 space-y-1 px-4 py-2 overflow-y-auto">
-                {menuItems.map((item) => (
+                {/* Main Navigation */}
+                {menuItems.slice(0, 4).map((item) => (
+                  <div key={item.path}>
+                    {/* Main Menu Item */}
+                    <Button
+                      variant={location.pathname === item.path ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start mb-1",
+                        item.submenu && "mb-2"
+                      )}
+                      onClick={() => {
+                        if (item.submenu) {
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {item.icon}
+                          <span className="ml-3">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto mr-2">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Learning */}
+                {menuItems.slice(4, 6).map((item) => (
+                  <div key={item.path}>
+                    {/* Main Menu Item */}
+                    <Button
+                      variant={location.pathname === item.path ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start mb-1",
+                        item.submenu && "mb-2"
+                      )}
+                      onClick={() => {
+                        if (item.submenu) {
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {item.icon}
+                          <span className="ml-3">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto mr-2">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Business */}
+                {menuItems.slice(6, 8).map((item) => (
+                  <div key={item.path}>
+                    {/* Main Menu Item */}
+                    <Button
+                      variant={location.pathname === item.path ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start mb-1",
+                        item.submenu && "mb-2"
+                      )}
+                      onClick={() => {
+                        if (item.submenu) {
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {item.icon}
+                          <span className="ml-3">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto mr-2">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Professional */}
+                {menuItems.slice(8, 10).map((item) => (
+                  <div key={item.path}>
+                    {/* Main Menu Item */}
+                    <Button
+                      variant={location.pathname === item.path ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start mb-1",
+                        item.submenu && "mb-2"
+                      )}
+                      onClick={() => {
+                        if (item.submenu) {
+                        } else {
+                          navigate(item.path);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {item.icon}
+                          <span className="ml-3">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="ml-auto mr-2">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Shop */}
+                {menuItems.slice(10).map((item) => (
                   <div key={item.path}>
                     {/* Main Menu Item */}
                     <Button
@@ -836,7 +964,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {/* Learning */}
                         <div className="space-y-1">
                           <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Learning</h4>
-                          {menuItems.slice(4, 7).map((item) => (
+                          {menuItems.slice(4, 6).map((item) => (
                             <Button
                               key={item.path}
                               variant={location.pathname === item.path ? "secondary" : "ghost"}
@@ -872,7 +1000,79 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {/* Business */}
                         <div className="space-y-1">
                           <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
-                          {menuItems.slice(7).map((item) => (
+                          {menuItems.slice(6, 8).map((item) => (
+                            <Button
+                              key={item.path}
+                              variant={location.pathname === item.path ? "secondary" : "ghost"}
+                              className={cn(
+                                "w-full justify-start h-11 gap-3",
+                                "transition-all duration-200",
+                                location.pathname === item.path ? 
+                                  "bg-primary/10 hover:bg-primary/15" : 
+                                  "hover:bg-muted/50",
+                                "rounded-lg"
+                              )}
+                              onClick={() => {
+                                navigate(item.path);
+                                setIsSheetOpen(false);
+                              }}
+                            >
+                              <div className={cn(
+                                "p-1.5 rounded-md",
+                                location.pathname === item.path ? "bg-primary/10" : "bg-muted"
+                              )}>
+                                {item.icon}
+                              </div>
+                              <span className="font-medium">{item.label}</span>
+                              {item.badge && (
+                                <Badge variant="secondary" className="ml-auto">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </Button>
+                          ))}
+                        </div>
+
+                        {/* Professional */}
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Professional</h4>
+                          {menuItems.slice(8, 10).map((item) => (
+                            <Button
+                              key={item.path}
+                              variant={location.pathname === item.path ? "secondary" : "ghost"}
+                              className={cn(
+                                "w-full justify-start h-11 gap-3",
+                                "transition-all duration-200",
+                                location.pathname === item.path ? 
+                                  "bg-primary/10 hover:bg-primary/15" : 
+                                  "hover:bg-muted/50",
+                                "rounded-lg"
+                              )}
+                              onClick={() => {
+                                navigate(item.path);
+                                setIsSheetOpen(false);
+                              }}
+                            >
+                              <div className={cn(
+                                "p-1.5 rounded-md",
+                                location.pathname === item.path ? "bg-primary/10" : "bg-muted"
+                              )}>
+                                {item.icon}
+                              </div>
+                              <span className="font-medium">{item.label}</span>
+                              {item.badge && (
+                                <Badge variant="secondary" className="ml-auto">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </Button>
+                          ))}
+                        </div>
+
+                        {/* Shop */}
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Shop</h4>
+                          {menuItems.slice(10).map((item) => (
                             <Button
                               key={item.path}
                               variant={location.pathname === item.path ? "secondary" : "ghost"}
