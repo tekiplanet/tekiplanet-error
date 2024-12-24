@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { withdrawalService } from '@/services/withdrawalService';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
-import { Loader2, ChevronRight, Bank, CreditCard, ArrowRight, Search } from 'lucide-react';
+import { Loader2, ChevronRight, Bank, CreditCard, ArrowRight, Search, Trash2, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { settingsService } from '@/services/settingsService';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { transactionService } from '@/services/transactionService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WithdrawalModalProps {
   open: boolean;
@@ -40,6 +50,8 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
   } | null>(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
 
   const user = useAuthStore(state => state.user);
   const queryClient = useQueryClient();
@@ -140,6 +152,18 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Withdrawal failed');
+    }
+  });
+
+  // Add delete mutation
+  const deleteBankAccountMutation = useMutation({
+    mutationFn: withdrawalService.deleteBankAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      toast.success('Bank account deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to delete bank account');
     }
   });
 
@@ -291,33 +315,56 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
           {bankAccounts.map(account => (
             <div
               key={account.id}
-              onClick={() => {
-                setSelectedBankAccount(account.id);
-                setStep('confirm');
-              }}
               className={cn(
-                "p-4 rounded-xl border-2 cursor-pointer transition-all",
-                "hover:border-primary/50",
+                "p-4 rounded-xl border-2 transition-all",
+                "hover:border-primary/50 relative group",
                 selectedBankAccount === account.id 
                   ? "border-primary bg-primary/5" 
                   : "border-border"
               )}
             >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="font-medium">{account.bank_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {account.account_number}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {account.account_name}
-                  </p>
+              <div 
+                className="cursor-pointer"
+                onClick={() => {
+                  setSelectedBankAccount(account.id);
+                  setStep('confirm');
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="font-medium">{account.bank_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {account.account_number}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {account.account_name}
+                    </p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    {account.is_default && (
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        Default
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAccountToDelete(account.id);
+                        setDeleteModalOpen(true);
+                      }}
+                      disabled={deleteBankAccountMutation.isPending}
+                    >
+                      {deleteBankAccountMutation.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <X className="h-3 w-3 text-destructive" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                {account.is_default && (
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    Default
-                  </span>
-                )}
               </div>
             </div>
           ))}
@@ -527,6 +574,38 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
           {step === 'confirm' && renderConfirmStep()}
         </div>
       </DialogContent>
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bank Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this bank account? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => {
+                if (accountToDelete) {
+                  deleteBankAccountMutation.mutate(accountToDelete);
+                  setDeleteModalOpen(false);
+                  setAccountToDelete(null);
+                }
+              }}
+            >
+              {deleteBankAccountMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Account'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

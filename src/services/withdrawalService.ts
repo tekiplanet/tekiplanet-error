@@ -70,5 +70,14 @@ export const withdrawalService = {
   async withdraw(data: WithdrawalRequest) {
     const response = await api.post('/withdraw', data);
     return response.data;
+  },
+
+  async deleteBankAccount(id: string) {
+    try {
+      const response = await api.delete(`/bank-accounts/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };

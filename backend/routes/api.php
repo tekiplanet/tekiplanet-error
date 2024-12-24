@@ -360,4 +360,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bank-accounts', [WithdrawalController::class, 'getBankAccounts']);
     Route::post('/bank-accounts/default', [WithdrawalController::class, 'setDefaultAccount']);
     Route::post('/withdraw', [WithdrawalController::class, 'withdraw']);
+    Route::delete('/bank-accounts/{id}', [WithdrawalController::class, 'deleteBankAccount']);
 });

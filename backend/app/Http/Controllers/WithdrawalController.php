@@ -45,6 +45,19 @@ class WithdrawalController extends Controller
         ]);
 
         try {
+            // Check if account already exists for this user
+            $user = auth()->user();
+            $existingAccount = BankAccount::where('user_id', $user->id)
+                ->where('account_number', $request->account_number)
+                ->where('bank_code', $request->bank_code)
+                ->first();
+
+            if ($existingAccount) {
+                return response()->json([
+                    'error' => 'This bank account is already saved to your profile'
+                ], 400);
+            }
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.paystack.secret_key')
             ])->get('https://api.paystack.co/bank/resolve', [
@@ -259,6 +272,25 @@ class WithdrawalController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to set default bank account: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to set default bank account'], 500);
+        }
+    }
+
+    public function deleteBankAccount($id)
+    {
+        try {
+            $user = auth()->user();
+            $bankAccount = BankAccount::findOrFail($id);
+
+            if ($bankAccount->user_id !== $user->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+
+            $bankAccount->delete();
+
+            return response()->json(['message' => 'Bank account deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error('Failed to delete bank account: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete bank account'], 500);
         }
     }
 }
