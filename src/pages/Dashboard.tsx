@@ -91,9 +91,9 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
     initialData: 0
   });
 
-  const { data: businessProfile } = useQuery({
+  const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ['business-profile'],
-    queryFn: businessService.getProfile,
+    queryFn: businessService.checkProfile,
     retry: false,
     enabled: true,
     onSuccess: (data) => {
@@ -344,9 +344,9 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
   };
 
   console.log('Menu Rendering Check:', {
-    hasProfile: !!businessProfile,
-    status: businessProfile?.status,
-    shouldShow: businessProfile && businessProfile.status === 'active'
+    hasProfile: !!profileData,
+    status: profileData?.status,
+    shouldShow: profileData && profileData.status === 'active'
   });
 
   return (
@@ -467,7 +467,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                 )}
 
                 {/* Business - Shows only if user has active business profile */}
-                {businessProfile && businessProfile.status === 'active' && (
+                {profileData?.has_profile && profileData?.profile?.status === 'active' && (
                   <div className="space-y-1">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                     {menuItems.slice(6, 8).map((item) => (
@@ -1043,7 +1043,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         )}
 
                         {/* Business - Shows only if user has active business profile */}
-                        {businessProfile && businessProfile.status === 'active' && (
+                        {profileData?.has_profile && profileData?.profile?.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                             {menuItems.slice(6, 8).map((item) => (
