@@ -363,57 +363,38 @@ class BusinessInvoiceController extends Controller
 
             $invoice = BusinessInvoice::findOrFail($id);
             
-            Log::info('Starting payment recording', [
-                'invoice_id' => $id,
-                'amount' => $request->amount,
-                'currency' => $invoice->currency
-            ]);
-
-            try {
-                // Convert amount to NGN using exchange rate API
-                $convertedAmount = $this->currencyService->convertToNGN(
-                    $request->amount,
-                    $invoice->currency
-                );
-
-                Log::info('Payment conversion successful', [
-                    'original_amount' => $request->amount,
-                    'currency' => $invoice->currency,
-                    'converted_amount_ngn' => $convertedAmount
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Currency conversion failed', [
-                    'error' => $e->getMessage(),
-                    'invoice_id' => $id,
-                    'amount' => $request->amount,
-                    'currency' => $invoice->currency
-                ]);
-                throw $e;
-            }
-
+            // Create payment first without conversion
             $payment = BusinessInvoicePayment::create([
                 'invoice_id' => $invoice->id,
                 'amount' => $request->amount,
                 'currency' => $invoice->currency,
-                'converted_amount' => $convertedAmount,
                 'payment_method' => $request->payment_method,
                 'payment_date' => now(),
                 'notes' => $request->notes
             ]);
 
             // Update invoice paid amount
-            $invoice->paid_amount = $invoice->payments->sum('amount') + $request->amount;
-            $invoice->status = $invoice->paid_amount >= $invoice->amount ? 'paid' : 'partially_paid';
+            $totalPaid = BusinessInvoicePayment::where('invoice_id', $invoice->id)->sum('amount');
+            $invoice->paid_amount = $totalPaid;
+            $invoice->status = $totalPaid >= $invoice->amount ? 'paid' : 'partially_paid';
             $invoice->save();
 
-            // Send payment receipt email
-            SendPaymentReceiptEmail::dispatch($payment);
+            // Try currency conversion after payment is recorded
+            try {
+                $convertedAmount = $this->currencyService->convertToNGN($request->amount, $invoice->currency);
+                $payment->update(['converted_amount' => $convertedAmount]);
+            } catch (\Exception $e) {
+                Log::error('Currency conversion failed but payment recorded:', [
+                    'error' => $e->getMessage(),
+                    'payment_id' => $payment->id
+                ]);
+            }
 
             DB::commit();
 
             return response()->json([
                 'message' => 'Payment recorded successfully',
-                'payment' => $payment
+                'payment' => $payment->fresh()
             ]);
 
         } catch (\Exception $e) {
@@ -424,7 +405,7 @@ class BusinessInvoiceController extends Controller
             ]);
             
             return response()->json([
-                'message' => 'Failed to record payment: ' . $e->getMessage()
+                'message' => 'Failed to record payment'
             ], 500);
         }
     }

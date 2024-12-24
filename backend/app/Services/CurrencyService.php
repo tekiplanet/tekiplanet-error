@@ -19,74 +19,35 @@ class CurrencyService
 
     public function convertToNGN($amount, $fromCurrency)
     {
-        Log::info('Starting currency conversion', [
-            'amount' => $amount,
-            'from_currency' => $fromCurrency,
-            'api_key_exists' => !empty($this->apiKey)
-        ]);
-
         if ($fromCurrency === 'NGN') {
             return $amount;
         }
 
         try {
-            $cacheKey = "exchange_rate_{$fromCurrency}_NGN";
-
-            // Get exchange rate from cache or API
-            $rate = Cache::remember($cacheKey, 3600, function () use ($fromCurrency) {
-                $url = "{$this->baseUrl}{$fromCurrency}/NGN";
-                
-                Log::info('Fetching fresh exchange rate', [
-                    'url' => $url,
-                    'from_currency' => $fromCurrency
-                ]);
-
-                $response = Http::get($url);
-                
-                Log::info('API Response', [
-                    'status' => $response->status(),
-                    'body' => $response->json()
-                ]);
-
-                if (!$response->successful()) {
-                    throw new \Exception('Failed to fetch exchange rate: ' . $response->body());
-                }
-
-                $data = $response->json();
-                $rate = $data['conversion_rate'] ?? null;
-
-                Log::info('Exchange rate fetched', [
-                    'rate' => $rate,
-                    'from_currency' => $fromCurrency
-                ]);
-
-                return $rate;
-            });
-
-            if (!$rate) {
-                throw new \Exception("Could not get exchange rate for {$fromCurrency}");
+            $response = Http::get("{$this->baseUrl}{$fromCurrency}/NGN");
+            
+            if (!$response->successful()) {
+                throw new \Exception('Failed to fetch exchange rate');
             }
 
-            $convertedAmount = round($amount * $rate, 2);
+            $data = $response->json();
+            
+            if (!isset($data['conversion_rate'])) {
+                throw new \Exception('Invalid response from exchange rate API');
+            }
 
-            Log::info('Currency conversion completed', [
-                'from_currency' => $fromCurrency,
-                'amount' => $amount,
-                'rate' => $rate,
-                'converted_amount' => $convertedAmount
-            ]);
-
-            return $convertedAmount;
+            return round($amount * $data['conversion_rate'], 2);
 
         } catch (\Exception $e) {
             Log::error('Currency conversion failed:', [
                 'error' => $e->getMessage(),
                 'from_currency' => $fromCurrency,
                 'amount' => $amount,
-                'trace' => $e->getTraceAsString()
+                'api_response' => $response->json() ?? null
             ]);
             
-            throw $e;
+            // Return original amount if conversion fails
+            return $amount;
         }
     }
 }
