@@ -58,6 +58,7 @@ import ConsultingBookingDetails from "./ConsultingBookingDetails";
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import { Loader2 } from "lucide-react";
 import { businessService } from '@/services/businessService';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 interface MenuItem {
   label: string;
@@ -649,7 +650,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header */}
           <header className={cn(
-            "flex h-16 items-center gap-4 border-b border-border/30 bg-background/30 backdrop-blur-[12px] px-4 md:hidden",
+            "flex h-16 items-center gap-4 border-b border-border/30 bg-background/30 backdrop-blur-[12px] px-4 md:hidden z-40 relative",
             location.pathname === "/dashboard/settings" && "hidden"
           )}>
             <div className="flex-1 flex items-center gap-3">
@@ -713,16 +714,20 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
 
             <div className="flex items-center gap-2">
               {/* Notifications */}
-              <HoverCard>
-                <HoverCardTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
                       3
                     </span>
                   </Button>
-                </HoverCardTrigger>
-                <HoverCardContent align="end" className="w-80">
+                </PopoverTrigger>
+                <PopoverContent 
+                  align="end" 
+                  className="w-80 z-[100]"
+                  sideOffset={8}
+                >
                   <div className="space-y-2">
                     <h4 className="font-semibold">Recent Notifications</h4>
                     <div className="space-y-3">
@@ -759,8 +764,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                       View All Notifications
                     </Button>
                   </div>
-                </HoverCardContent>
-              </HoverCard>
+                </PopoverContent>
+              </Popover>
 
               {/* Cart Icon */}
               <Button 
