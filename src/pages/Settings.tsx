@@ -118,7 +118,7 @@ const notificationsFormSchema = z.object({
   email_notifications: z.boolean(),
   push_notifications: z.boolean(),
   marketing_notifications: z.boolean(),
-  profile_visibility: z.enum(['public', 'private', 'friends']),
+  profile_visibility: z.enum(['public', 'private']),
   data_collection: z.boolean(),
 });
 
@@ -1191,18 +1191,65 @@ const SecuritySettingsForm = () => {
   );
 };
 
+
+
 const NotificationsForm = () => {
+
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+  const handlePreferenceUpdate = async (values: z.infer<typeof notificationsFormSchema>) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updatePreferences({
+        email_notifications: values.email_notifications,
+        push_notifications: values.push_notifications,
+        marketing_notifications: values.marketing_notifications,
+        profile_visibility: values.profile_visibility,
+      });
+      toast.success('Preferences updated successfully');
+    } catch (error: any) {
+      console.error('Failed to update preferences:', error);
+      toast.error(error.response?.data?.message || 'Failed to update preferences');
+      // Reset form to previous values on error
+      if (user) {
+        form.reset({
+          email_notifications: user.email_notifications === true,
+          push_notifications: user.push_notifications === true,
+          marketing_notifications: user.marketing_notifications === true,
+          profile_visibility: (user.profile_visibility as 'public' | 'private') || 'private',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const { user, updatePreferences } = useAuthStore();
   const form = useForm<z.infer<typeof notificationsFormSchema>>({
     resolver: zodResolver(notificationsFormSchema),
     defaultValues: {
-      email_notifications: user?.email_notifications || false,
-      push_notifications: user?.push_notifications || false,
-      marketing_notifications: user?.marketing_notifications || false,
-      profile_visibility: user?.profile_visibility || 'private',
-      data_collection: false,
+      email_notifications: user?.email_notifications === true,
+      push_notifications: user?.push_notifications === true,
+      marketing_notifications: user?.marketing_notifications === true,
+      profile_visibility: (user?.profile_visibility as 'public' | 'private') || 'private',
     },
   });
+
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        email_notifications: user.email_notifications === true,
+        push_notifications: user.push_notifications === true,
+        marketing_notifications: user.marketing_notifications === true,
+        profile_visibility: (user.profile_visibility as 'public' | 'private') || 'private',
+      });
+    }
+  }, [user, form]);  
 
   const onSubmit = async (values: z.infer<typeof notificationsFormSchema>) => {
     const loadingToast = toast.loading('Updating notification preferences...');
@@ -1219,7 +1266,7 @@ const NotificationsForm = () => {
 
   return (
     <Form {...form}>
-      <form onChange={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form className="space-y-6">
                   <div className="space-y-4">
           <FormField
             control={form.control}
@@ -1233,10 +1280,17 @@ const NotificationsForm = () => {
                         </p>
                       </div>
                 <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={async (checked) => {
+                    if (isSubmitting) return;
+                    field.onChange(checked);
+                    await handlePreferenceUpdate({
+                      ...form.getValues(),
+                      [field.name]: checked
+                    });
+                  }}
+                />
                 </FormControl>
                     </div>
             )}
@@ -1256,7 +1310,14 @@ const NotificationsForm = () => {
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={async (checked) => {
+                      if (isSubmitting) return;
+                      field.onChange(checked);
+                      await handlePreferenceUpdate({
+                        ...form.getValues(),
+                        [field.name]: checked
+                      });
+                    }}
                   />
                 </FormControl>
                     </div>
@@ -1275,10 +1336,17 @@ const NotificationsForm = () => {
                         </p>
                       </div>
                 <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={async (checked) => {
+                    if (isSubmitting) return;
+                    field.onChange(checked);
+                    await handlePreferenceUpdate({
+                      ...form.getValues(),
+                      [field.name]: checked
+                    });
+                  }}
+                />
                 </FormControl>
                     </div>
             )}
@@ -1291,18 +1359,24 @@ const NotificationsForm = () => {
               <FormItem>
                 <FormLabel>Profile Visibility</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={async (value) => {
+                    if (isSubmitting) return;
+                    field.onChange(value);
+                    await handlePreferenceUpdate({
+                      ...form.getValues(),
+                      profile_visibility: value as 'public' | 'private'
+                    });
+                  }}
                   defaultValue={field.value}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select visibility" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="public">Public</SelectItem>
-                          <SelectItem value="private">Private</SelectItem>
-                          <SelectItem value="friends">Friends Only</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

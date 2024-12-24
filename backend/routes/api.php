@@ -141,7 +141,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // User Preferences Route
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::put('/user/preferences', [UserController::class, 'updatePreferences']);
+    Route::put('/user/preferences', [UserPreferencesController::class, 'updatePreferences']);
     Route::put('/user/type', [UserController::class, 'updateUserType']);
 });
 

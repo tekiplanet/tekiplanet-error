@@ -30,6 +30,7 @@ interface UserData {
   email_notifications?: boolean;
   push_notifications?: boolean;
   marketing_notifications?: boolean;
+  profile_visibility?: 'public' | 'private';
 }
 
 interface User {
@@ -42,6 +43,7 @@ interface UserPreferences {
   email_notifications?: boolean;
   push_notifications?: boolean;
   marketing_notifications?: boolean;
+  profile_visibility?: 'public' | 'private';
 }
 
 interface LoginResponse {
@@ -242,63 +244,16 @@ export const authService = {
   },
 
   async updateUserPreferences(preferences: UserPreferences): Promise<UserData> {
-    const token = this.getToken();
-    
-    if (!token) {
-      console.error('No authentication token available');
-      throw new Error('No authentication token');
-    }
-
-    // Map theme to dark_mode
-    const mappedPreferences = {
-      ...preferences,
-      dark_mode: preferences.theme === 'dark' ? true : false
-    };
-    delete mappedPreferences.theme;
-
     try {
-      const response = await fetch(`${API_URL}/user/preferences`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(mappedPreferences)
-      });
-
-      console.log('Updating preferences with token:', token);
-      console.log('Mapped Preferences:', mappedPreferences);
-
-      // Parse response body once
-      const responseBody = await response.text();
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to update preferences';
-        try {
-          const errorData = JSON.parse(responseBody);
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = responseBody || errorMessage;
-        }
-
-        console.error('Preference update error:', {
-          status: response.status,
-          message: errorMessage
-        });
-
-        throw new Error(errorMessage);
+      console.log('Sending preferences update:', preferences);
+      const response = await apiClient.put('/user/preferences', preferences);
+      console.log('Received response:', response.data);
+      if (!response.data.user) {
+        throw new Error('No user data in response');
       }
-
-      // Parse JSON response
-      const data = JSON.parse(responseBody);
-      console.log('Preference update response:', data);
-      
-      return data.user || data;
+      return response.data.user;
     } catch (error) {
-      console.error('Error updating user preferences:', error);
+      console.error('Failed to update preferences:', error);
       throw error;
     }
   },

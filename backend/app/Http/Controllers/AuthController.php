@@ -126,19 +126,15 @@ class AuthController extends Controller
         ]);
 
         // Return user data with professional profile
-        return response()->json([
-            'id' => $user->id,
-            'username' => $user->username,
-            'email' => $user->email,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'avatar' => $user->avatar,
-            'account_type' => $user->account_type,
-            'wallet_balance' => $user->wallet_balance,
-            'dark_mode' => $user->dark_mode,
-            'two_factor_enabled' => (bool) $user->two_factor_enabled,
-            'professional' => $user->professional,
-            'businessProfile' => $user->businessProfile
-        ]);
+        return response()->json($user->makeVisible([
+            'email_notifications',
+            'push_notifications',
+            'marketing_notifications',
+            'profile_visibility',
+            'dark_mode',
+            'wallet_balance',
+            'professional',
+            'businessProfile'
+        ]));
     }
 }

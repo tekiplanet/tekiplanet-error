@@ -20,6 +20,10 @@ type UserData = {
   };
   dark_mode?: boolean;
   theme?: 'light' | 'dark';
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  marketing_notifications?: boolean;
+  profile_visibility?: 'public' | 'private';
 };
 
 type UserPreferences = {
@@ -47,10 +51,8 @@ type AuthState = {
     email_notifications?: boolean;
     push_notifications?: boolean;
     marketing_notifications?: boolean;
-    profile_visibility?: 'public' | 'private' | 'friends';
-    timezone?: string;
-    language?: string;
-  }) => Promise<UserData>;
+    profile_visibility?: 'public' | 'private';
+  }) => Promise<any>;
 };
 
 const useAuthStore = create<AuthState>(
@@ -355,13 +357,19 @@ const useAuthStore = create<AuthState>(
         email_notifications?: boolean;
         push_notifications?: boolean;
         marketing_notifications?: boolean;
-        profile_visibility?: 'public' | 'private' | 'friends';
-        timezone?: string;
-        language?: string;
+        profile_visibility?: 'public' | 'private';
       }) => {
         try {
-          const response = await apiClient.put('/settings/preferences', preferences);
-          set({ user: response.data.user });
+          const response = await apiClient.put('/user/preferences', preferences);
+          const updatedUser = {
+            ...get().user,
+            ...response.data.user,
+            email_notifications: response.data.user.email_notifications === true,
+            push_notifications: response.data.user.push_notifications === true,
+            marketing_notifications: response.data.user.marketing_notifications === true,
+            profile_visibility: response.data.user.profile_visibility || 'private'
+          };
+          set({ user: updatedUser });
           return response.data;
         } catch (error) {
           console.error('Failed to update preferences:', error);
