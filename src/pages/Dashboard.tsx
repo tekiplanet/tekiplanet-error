@@ -57,6 +57,7 @@ import ConsultingBookings from "./ConsultingBookings";
 import ConsultingBookingDetails from "./ConsultingBookingDetails";
 import PullToRefresh from 'react-simple-pull-to-refresh';
 import { Loader2 } from "lucide-react";
+import { businessService } from '@/services/businessService';
 
 interface MenuItem {
   label: string;
@@ -88,6 +89,19 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
     queryKey: ['cartCount'],
     queryFn: storeService.getCartCount,
     initialData: 0
+  });
+
+  const { data: businessProfile } = useQuery({
+    queryKey: ['business-profile'],
+    queryFn: businessService.getProfile,
+    retry: false,
+    enabled: true,
+    onSuccess: (data) => {
+      console.log('Business Profile Data:', data);
+    },
+    onError: (error) => {
+      console.log('Business Profile Error:', error);
+    }
   });
 
   const handleProfileSwitch = async (type: 'student' | 'business' | 'professional') => {
@@ -329,6 +343,12 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
     }
   };
 
+  console.log('Menu Rendering Check:', {
+    hasProfile: !!businessProfile,
+    status: businessProfile?.status,
+    shouldShow: businessProfile && businessProfile.status === 'active'
+  });
+
   return (
     <>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -446,8 +466,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   </div>
                 )}
 
-                {/* Business */}
-                {user?.account_type === 'business' && (
+                {/* Business - Shows only if user has active business profile */}
+                {businessProfile && businessProfile.status === 'active' && (
                   <div className="space-y-1">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                     {menuItems.slice(6, 8).map((item) => (
@@ -1022,8 +1042,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                           </div>
                         )}
 
-                        {/* Business - Shows only for business accounts */}
-                        {user?.account_type === 'business' && (
+                        {/* Business - Shows only if user has active business profile */}
+                        {businessProfile && businessProfile.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                             {menuItems.slice(6, 8).map((item) => (

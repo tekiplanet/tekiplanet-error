@@ -146,4 +146,26 @@ class BusinessProfileController extends Controller
             ], 500);
         }
     }
+
+    public function show()
+    {
+        try {
+            $user = auth()->user();
+            $profile = BusinessProfile::where('user_id', $user->id)->first();
+            
+            Log::info('Business Profile Request', [
+                'user_id' => $user->id,
+                'profile' => $profile
+            ]);
+
+            if (!$profile) {
+                return response()->json(['error' => 'Business profile not found'], 404);
+            }
+
+            return response()->json($profile);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch business profile: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch business profile'], 500);
+        }
+    }
 } 
