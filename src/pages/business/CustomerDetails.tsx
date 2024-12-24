@@ -671,31 +671,9 @@ export default function CustomerDetails() {
             </div>
 
             <TabsContent value="invoices" className="space-y-4 mt-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Invoices</h3>
-                <Button 
-                  size="sm"
-                  onClick={() => setIsInvoiceFormOpen(true)}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Invoice
-                </Button>
-              </div>
-              <Card className="border-none bg-card w-full overflow-hidden">
-                <CardContent className="p-0">
-                  {isLoadingInvoices ? (
-                    <div className="p-8 flex items-center justify-center">
-                      <div className="space-y-4 w-full max-w-md">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="space-y-2">
-                            <div className="h-4 bg-muted rounded w-full animate-pulse" />
-                            <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : !invoices?.length ? (
+              <Card>
+                <CardContent className="p-4">
+                  {!invoices?.length ? (
                     <div className="p-8 text-center">
                       <FileText className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground">No invoices found</p>
@@ -781,7 +759,7 @@ export default function CustomerDetails() {
                               </div>
                               <div className="text-right">
                                 <p className="text-muted-foreground">Amount</p>
-                                <p className="font-medium">{formatCurrency(invoice.amount)}</p>
+                                <p className="font-medium">{formatCurrency(invoice.amount, invoice.currency)}</p>
                               </div>
                             </div>
                           </div>
