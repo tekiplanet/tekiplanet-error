@@ -86,6 +86,47 @@ interface Invoice {
   created_at: string;
 }
 
+interface DetailedInvoice extends Invoice {
+  business_id: string;
+  customer_id: string;
+  paid_amount: number;
+  payment_reminder_sent: boolean;
+  theme_color: string;
+  notes?: string;
+  updated_at: string;
+  items: {
+    id: string;
+    invoice_id: string;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+  }[];
+  business: {
+    id: string;
+    business_name: string;
+    email: string;
+    phone: string;
+    address: string;
+    logo_url?: string;
+  };
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address?: string;
+  };
+  payments: {
+    id: string;
+    invoice_id: string;
+    amount: number;
+    date: string;
+    notes?: string;
+    created_at: string;
+  }[];
+}
+
 export const businessService = {
   async getProfile() {
     const response = await apiClient.get<BusinessProfile>('/business/profile');
@@ -221,4 +262,54 @@ export const businessService = {
       throw error;
     }
   },
+  async getInvoice(invoiceId: string) {
+    try {
+      const response = await apiClient.get<DetailedInvoice>(`/business/invoices/${invoiceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      throw error;
+    }
+  },
+
+  downloadInvoice: async (id: string) => {
+    const { data } = await apiClient.get(`/business/invoices/${id}/download`, {
+      responseType: 'blob'
+    });
+    
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `invoice-${id}.pdf`);
+    
+    // Append to html link element page
+    document.body.appendChild(link);
+    
+    // Start download
+    link.click();
+    
+    // Clean up and remove the link
+    link.parentNode?.removeChild(link);
+  },
+
+  sendInvoice: async (id: string) => {
+    const { data } = await apiClient.post(`/business/invoices/${id}/send`);
+    return data;
+  },
+
+  recordPayment: async (id: string, data: any) => {
+    const { data: response } = await apiClient.post(`/business/invoices/${id}/payments`, data);
+    return response;
+  },
+
+  updateInvoiceStatus: async (id: string, status: string) => {
+    const { data } = await apiClient.patch(`/business/invoices/${id}/status`, { status });
+    return data;
+  },
+
+  getCustomerTransactions: async (customerId: string) => {
+    const { data } = await apiClient.get(`/business/customers/${customerId}/transactions`);
+    return data;
+  },  
 }; 
