@@ -63,6 +63,11 @@ interface InvoiceFormDialogProps {
   customerId: string;
 }
 
+const generateInvoiceNumber = () => {
+  const timestamp = Date.now().toString();
+  return `INV-${timestamp.slice(-9)}`;
+};
+
 export default function InvoiceFormDialog({ 
   open, 
   onOpenChange,
@@ -71,6 +76,7 @@ export default function InvoiceFormDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const queryClient = useQueryClient();
+  const [invoiceNumber, setInvoiceNumber] = useState(generateInvoiceNumber());
 
   const { data: customer } = useQuery({
     queryKey: ['business-customer', customerId],
@@ -79,7 +85,7 @@ export default function InvoiceFormDialog({
   });
 
   const defaultValues: Partial<InvoiceFormValues> = {
-    invoice_number: '',
+    invoice_number: generateInvoiceNumber(),
     due_date: new Date(),
     notes: '',
     theme_color: '#0000FF',
@@ -98,6 +104,17 @@ export default function InvoiceFormDialog({
       form.setValue('currency', customer.currency);
     }
   }, [customer]);
+
+  useEffect(() => {
+    if (open) {
+      setInvoiceNumber(generateInvoiceNumber());
+      form.reset({
+        ...defaultValues,
+        invoice_number: generateInvoiceNumber(),
+        currency: customer?.currency || 'NGN'
+      });
+    }
+  }, [open]);
 
   const addItem = () => {
     const currentItems = form.getValues('items') || [];
@@ -131,8 +148,13 @@ export default function InvoiceFormDialog({
   const onSubmit = async (values: InvoiceFormValues) => {
     try {
       setIsSubmitting(true);
+      
+      // Generate a new invoice number for this submission
+      const newInvoiceNumber = generateInvoiceNumber();
+      
       await businessService.createInvoice({
         ...values,
+        invoice_number: newInvoiceNumber, // Use the new invoice number
         customer_id: customerId
       });
       
@@ -141,6 +163,7 @@ export default function InvoiceFormDialog({
       onOpenChange(false);
       form.reset();
     } catch (error: any) {
+      console.error('Invoice creation error:', error);
       toast.error(
         'Failed to create invoice',
         { description: error.response?.data?.message || 'Please try again' }
@@ -171,8 +194,15 @@ export default function InvoiceFormDialog({
                     <FormItem>
                       <FormLabel>Invoice Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="INV-001" {...field} />
+                        <Input 
+                          {...field} 
+                          readOnly
+                          className="bg-muted"
+                        />
                       </FormControl>
+                      <FormDescription className="text-xs">
+                        Auto-generated invoice number
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

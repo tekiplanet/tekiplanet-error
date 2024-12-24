@@ -53,6 +53,39 @@ interface ActivityParams {
   to?: Date;
 }
 
+interface CreateInvoiceDto {
+  invoice_number?: string;
+  due_date: Date;
+  notes?: string;
+  theme_color: string;
+  items: {
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+  }[];
+  amount: number;
+  currency: string;
+  customer_id: string;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  amount: number;
+  currency: string;
+  due_date: string;
+  status: string;
+  status_details?: {
+    label: string;
+    is_overdue?: boolean;
+    days_overdue?: number;
+    paid_amount?: number;
+    remaining_amount?: number;
+  };
+  created_at: string;
+}
+
 export const businessService = {
   async getProfile() {
     const response = await apiClient.get<BusinessProfile>('/business/profile');
@@ -169,5 +202,23 @@ export const businessService = {
       console.error('Error fetching customers:', error);
       throw error;
     }
-  }
+  },
+  async createInvoice(data: CreateInvoiceDto) {
+    try {
+      const response = await apiClient.post('/business/invoices', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      throw error;
+    }
+  },
+  async getCustomerInvoices(customerId: string) {
+    try {
+      const response = await apiClient.get<Invoice[]>(`/business/customers/${customerId}/invoices`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching customer invoices:', error);
+      throw error;
+    }
+  },
 }; 
