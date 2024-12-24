@@ -303,7 +303,13 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
+              <PopoverContent 
+                className="w-[calc(100vw-3rem)] sm:w-[380px] p-0"
+                side="bottom"
+                align="center"
+                sideOffset={5}
+                style={{ zIndex: 9999 }}
+              >
                 <div className="p-2 sticky top-0 bg-background border-b">
                   <Input
                     placeholder="Search banks..."
