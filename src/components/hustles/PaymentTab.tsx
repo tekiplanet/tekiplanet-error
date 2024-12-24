@@ -81,7 +81,7 @@ const PaymentTab = ({ payments, currency }: PaymentTabProps) => {
                   </div>
                   <div className="text-right">
                     <div className="font-semibold text-base md:text-lg">
-                      {currency}{formatCurrency(payment.amount)}
+                      {formatCurrency(payment.amount, currency)}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       via {payment.method || payment.payment_type}
