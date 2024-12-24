@@ -275,7 +275,7 @@ export function BusinessProfileForm() {
                         <FormControl>
                           {field === 'business_type' ? (
                             <FormItem>
-                              <FormLabel>Business Type</FormLabel>
+                              {/* <FormLabel>Business Type</FormLabel> */}
                               <FormControl>
                                 <Popover open={open} onOpenChange={setOpen}>
                                   <PopoverTrigger asChild>
