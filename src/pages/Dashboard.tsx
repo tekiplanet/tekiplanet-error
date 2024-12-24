@@ -1056,7 +1056,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {user?.account_type === 'business' && profileData?.has_profile && profileData?.profile?.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
-                            {menuItems.slice(6, 8).map((item) => (
+                            {menuItems.slice(7, 9).map((item) => (
                               <Button
                                 key={item.path}
                                 variant={location.pathname === item.path ? "secondary" : "ghost"}
@@ -1094,7 +1094,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {user?.account_type === 'professional' && professionalData?.has_profile && professionalData?.profile?.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Professional</h4>
-                            {menuItems.slice(8, 10).map((item) => (
+                            {menuItems.slice(9, 11).map((item) => (
                               <Button
                                 key={item.path}
                                 variant={location.pathname === item.path ? "secondary" : "ghost"}
@@ -1131,7 +1131,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {/* Shop - Shows for all */}
                         <div className="space-y-1">
                           <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Shop</h4>
-                          {menuItems.slice(10).map((item) => (
+                          {menuItems.slice(11).map((item) => (
                             <Button
                               key={item.path}
                               variant={location.pathname === item.path ? "secondary" : "ghost"}
