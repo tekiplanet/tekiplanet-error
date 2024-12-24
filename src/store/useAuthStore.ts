@@ -13,6 +13,7 @@ type UserData = {
   avatar?: string;
   wallet_balance?: number;
   account_type?: 'student' | 'business' | 'professional';
+  two_factor_enabled?: boolean;
   preferences?: {
     dark_mode?: boolean;
     theme?: 'light' | 'dark';

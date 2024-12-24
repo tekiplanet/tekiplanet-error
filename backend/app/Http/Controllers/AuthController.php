@@ -99,7 +99,8 @@ class AuthController extends Controller
         Log::info('User data debug:', [
             'user_id' => $user->id,
             'professional' => $user->professional?->toArray(),
-            'has_professional' => $user->professional !== null
+            'has_professional' => $user->professional !== null,
+            'two_factor_enabled' => $user->two_factor_enabled
         ]);
 
         // Return user data with professional profile
@@ -113,6 +114,7 @@ class AuthController extends Controller
             'account_type' => $user->account_type,
             'wallet_balance' => $user->wallet_balance,
             'dark_mode' => $user->dark_mode,
+            'two_factor_enabled' => (bool) $user->two_factor_enabled,
             'professional' => $user->professional,
             'businessProfile' => $user->businessProfile
         ]);

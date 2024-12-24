@@ -19,7 +19,7 @@ import {
 import { AlertCircle } from 'lucide-react';
 
 export function TwoFactorSettings() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, initialize } = useAuthStore();
   const [isEnabling2FA, setIsEnabling2FA] = useState(false);
   const [isDisabling2FA, setIsDisabling2FA] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -63,12 +63,22 @@ export function TwoFactorSettings() {
   };
 
   const handleComplete2FA = async () => {
-    await updateUser({ two_factor_enabled: true });
-    setIsEnabling2FA(false);
-    setSetupData(null);
-    setVerificationCode('');
-    setIsVerified(false);
-    toast.success('Two-factor authentication enabled successfully');
+    try {
+      setLoading(true);
+      await updateUser({ two_factor_enabled: true });
+      await initialize();
+      setIsEnabling2FA(false);
+      setSetupData(null);
+      setVerificationCode('');
+      setIsVerified(false);
+      toast.success('Two-factor authentication enabled successfully');
+    } catch (error: any) {
+      toast.error('Failed to complete 2FA setup', {
+        description: error.message
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDisable2FA = async () => {
@@ -76,6 +86,7 @@ export function TwoFactorSettings() {
       setLoading(true);
       await twoFactorService.disable(verificationCode);
       await updateUser({ two_factor_enabled: false });
+      await initialize();
       setIsDisabling2FA(false);
       setVerificationCode('');
       toast.success('Two-factor authentication disabled successfully');

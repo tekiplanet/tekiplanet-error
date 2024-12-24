@@ -23,6 +23,7 @@ interface UserData {
   first_name?: string;
   last_name?: string;
   wallet_balance?: number;
+  two_factor_enabled?: boolean;
 }
 
 interface User {
@@ -236,6 +237,7 @@ export const authService = {
         const processedUserData = {
           ...userData,
           wallet_balance: Number(userData.wallet_balance || 0),
+          two_factor_enabled: userData.two_factor_enabled === 1 || userData.two_factor_enabled === true,
           preferences: {
             dark_mode: userData.dark_mode ?? false,
             theme: userData.dark_mode ? 'dark' : 'light'
