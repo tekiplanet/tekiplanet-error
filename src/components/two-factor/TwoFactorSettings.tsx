@@ -29,6 +29,7 @@ export function TwoFactorSettings() {
     recovery_codes: string[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   const handleEnable2FA = async () => {
     try {
@@ -36,6 +37,7 @@ export function TwoFactorSettings() {
       const data = await twoFactorService.enable();
       setSetupData(data);
       setIsEnabling2FA(true);
+      setIsVerified(false);
     } catch (error: any) {
       toast.error('Failed to enable 2FA', {
         description: error.message
@@ -49,11 +51,8 @@ export function TwoFactorSettings() {
     try {
       setLoading(true);
       await twoFactorService.verify(verificationCode);
-      await updateUser({ two_factor_enabled: true });
-      setIsEnabling2FA(false);
-      setSetupData(null);
-      setVerificationCode('');
-      toast.success('Two-factor authentication enabled successfully');
+      setIsVerified(true);
+      toast.success('Verification successful! Please save your recovery codes.');
     } catch (error: any) {
       toast.error('Failed to verify 2FA code', {
         description: error.message
@@ -61,6 +60,15 @@ export function TwoFactorSettings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleComplete2FA = async () => {
+    await updateUser({ two_factor_enabled: true });
+    setIsEnabling2FA(false);
+    setSetupData(null);
+    setVerificationCode('');
+    setIsVerified(false);
+    toast.success('Two-factor authentication enabled successfully');
   };
 
   const handleDisable2FA = async () => {
@@ -128,67 +136,93 @@ export function TwoFactorSettings() {
       )}
 
       {/* Enable 2FA Dialog */}
-      <Dialog open={isEnabling2FA} onOpenChange={setIsEnabling2FA}>
+      <Dialog 
+        open={isEnabling2FA} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsVerified(false);
+            setVerificationCode('');
+          }
+          setIsEnabling2FA(open);
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
             <DialogDescription>
-              Scan the QR code with your authenticator app and enter the verification code.
+              {!isVerified 
+                ? "Scan the QR code with your authenticator app and enter the verification code."
+                : "Save these recovery codes in a secure place before completing setup."
+              }
             </DialogDescription>
           </DialogHeader>
 
           {setupData && (
             <div className="space-y-6">
-              <div className="flex justify-center">
-                <QRCodeSVG
-                  value={setupData.qr_code_url}
-                  size={200}
-                  level="H"
-                  includeMargin
-                  className="border rounded-lg bg-white p-2"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Manual Entry Code</Label>
-                <p className="font-mono text-sm bg-muted p-2 rounded break-all">{setupData.secret}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Verification Code</Label>
-                <Input
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                  className="w-full"
-                />
-              </div>
-
-              <Button
-                onClick={handleVerify2FA}
-                disabled={!verificationCode || loading}
-                className="w-full"
-              >
-                Verify and Enable
-              </Button>
-
-              <div className="space-y-2">
-                <Label>Recovery Codes</Label>
-                <Card className="p-4">
-                  <div className="space-y-1">
-                    {setupData.recovery_codes.map((code, index) => (
-                      <p key={index} className="font-mono text-sm">{code}</p>
-                    ))}
+              {!isVerified ? (
+                <>
+                  <div className="flex justify-center">
+                    <QRCodeSVG
+                      value={setupData.qr_code_url}
+                      size={200}
+                      level="H"
+                      includeMargin
+                      className="border rounded-lg bg-white p-2"
+                    />
                   </div>
-                  <div className="flex items-start gap-2 mt-3 text-sm text-muted-foreground">
-                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>
-                      Save these recovery codes in a secure place. You can use them to access your account if you lose your authenticator device.
-                    </p>
+
+                  <div className="space-y-2">
+                    <Label>Manual Entry Code</Label>
+                    <p className="font-mono text-sm bg-muted p-2 rounded break-all">{setupData.secret}</p>
                   </div>
-                </Card>
-              </div>
+
+                  <div className="space-y-2">
+                    <Label>Verification Code</Label>
+                    <Input
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      placeholder="Enter 6-digit code"
+                      maxLength={6}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleVerify2FA}
+                    disabled={!verificationCode || loading}
+                    className="w-full"
+                  >
+                    Verify Code
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label>Recovery Codes</Label>
+                    <Card className="p-4">
+                      <div className="space-y-1">
+                        {setupData.recovery_codes.map((code, index) => (
+                          <p key={index} className="font-mono text-sm">{code}</p>
+                        ))}
+                      </div>
+                      <div className="flex items-start gap-2 mt-3 text-sm text-muted-foreground">
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <p>
+                          Save these recovery codes in a secure place. You can use them to access your account if you lose your authenticator device.
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  <Button
+                    onClick={handleComplete2FA}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    Complete Setup
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </DialogContent>
