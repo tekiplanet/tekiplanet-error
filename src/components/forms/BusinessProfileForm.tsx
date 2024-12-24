@@ -60,17 +60,26 @@ const businessProfileSchema = z.object({
   description: z.string().min(20, "Please provide a brief description of your business")
 });
 
-const steps = [
+interface FormStep {
+  title: string;
+  description: string;
+  fields: (keyof z.infer<typeof businessProfileSchema>)[];
+}
+
+const steps: FormStep[] = [
   {
     title: "Basic Information",
+    description: "Start with your business basics",
     fields: ["business_name", "business_email", "phone_number", "business_type"]
   },
   {
     title: "Location",
+    description: "Where is your business located?",
     fields: ["address", "city", "state", "country"]
   },
   {
     title: "Additional Information",
+    description: "Tell us more about your business",
     fields: ["logo", "registration_number", "tax_number", "website", "description"]
   }
 ];
@@ -303,34 +312,28 @@ export function BusinessProfileForm() {
                                       <CommandList>
                                         <CommandEmpty>No business type found.</CommandEmpty>
                                         <CommandGroup>
-                                          <ScrollArea className="h-72">
-                                            <div className="p-2">
-                                              {businessTypes
-                                                .filter((type) =>
-                                                  type.toLowerCase().includes(searchValue.toLowerCase())
-                                                )
-                                                .map((type) => (
-                                                  <div
-                                                    key={type}
-                                                    onClick={() => {
-                                                      fieldProps.onChange(type);
-                                                      setOpen(false);
-                                                    }}
-                                                    className={cn(
-                                                      "flex items-center gap-2 w-full rounded-sm px-2 py-3 cursor-pointer hover:bg-muted",
-                                                      fieldProps.value === type && "bg-muted"
-                                                    )}
-                                                  >
-                                                    <div className="flex flex-col flex-1">
-                                                      <span className="font-medium">{type}</span>
-                                                    </div>
-                                                    {fieldProps.value === type && (
-                                                      <Check className="h-4 w-4 text-primary" />
-                                                    )}
-                                                  </div>
-                                                ))}
-                                            </div>
-                                          </ScrollArea>
+                                          {businessTypes
+                                            .filter((type) =>
+                                              type.toLowerCase().includes(searchValue.toLowerCase())
+                                            )
+                                            .map((type) => (
+                                              <CommandItem
+                                                key={type}
+                                                value={type}
+                                                onSelect={() => {
+                                                  fieldProps.onChange(type);
+                                                  setOpen(false);
+                                                }}
+                                              >
+                                                <Check
+                                                  className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    fieldProps.value === type ? "opacity-100" : "opacity-0"
+                                                  )}
+                                                />
+                                                {type}
+                                              </CommandItem>
+                                            ))}
                                         </CommandGroup>
                                       </CommandList>
                                     </Command>
