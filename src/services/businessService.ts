@@ -17,6 +17,13 @@ export interface BusinessProfile {
   logo_url: string | null;
 }
 
+interface TransactionParams {
+  page?: number;
+  search?: string;
+  from?: Date;
+  to?: Date;
+}
+
 export const businessService = {
   async getProfile() {
     const response = await api.get<BusinessProfile>('/business/profile');
@@ -37,6 +44,21 @@ export const businessService = {
       return response.data;
     } catch (error) {
       console.error('Failed to fetch business metrics:', error);
+      throw error;
+    }
+  },
+  async getTransactions(params: TransactionParams = {}) {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params.page) searchParams.set('page', params.page.toString());
+      if (params.search) searchParams.set('search', params.search);
+      if (params.from) searchParams.set('from', params.from.toISOString());
+      if (params.to) searchParams.set('to', params.to.toISOString());
+
+      const response = await api.get(`/business/transactions?${searchParams.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
       throw error;
     }
   }
