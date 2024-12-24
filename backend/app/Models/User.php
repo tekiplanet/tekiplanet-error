@@ -163,4 +163,20 @@ class User extends Authenticatable
             }
         );
     }
+
+    // Add these relationships to the existing User model
+
+    public function notifications()
+    {
+        return $this->belongsToMany(Notification::class, 'user_notifications')
+            ->withPivot('read', 'read_at')
+            ->withTimestamps()
+            ->orderByDesc('created_at');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()
+            ->wherePivot('read', false);
+    }
 }
