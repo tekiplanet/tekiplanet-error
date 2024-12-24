@@ -35,5 +35,10 @@ export const twoFactorService = {
   async generateRecoveryCodes() {
     const response = await apiClient.post<{ recovery_codes: string[] }>('/auth/2fa/recovery-codes');
     return response.data;
+  },
+
+  async getRecoveryCodes() {
+    const response = await apiClient.get<{ recovery_codes: string[] }>('/auth/2fa/recovery-codes');
+    return response.data;
   }
 };

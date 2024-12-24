@@ -131,9 +131,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('enable', [TwoFactorController::class, 'enable']);
             Route::post('verify', [TwoFactorController::class, 'verify']);
             Route::post('disable', [TwoFactorController::class, 'disable']);
-            Route::post('validate', [TwoFactorController::class, 'validateCode']);
+            Route::post('validate', [TwoFactorController::class, 'validate']);
             Route::post('validate-recovery', [TwoFactorController::class, 'validateRecoveryCode']);
             Route::post('recovery-codes', [TwoFactorController::class, 'generateRecoveryCodes']);
+            Route::get('recovery-codes', [TwoFactorController::class, 'getRecoveryCodes']);
         });
     });
 });

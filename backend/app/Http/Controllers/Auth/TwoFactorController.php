@@ -170,4 +170,19 @@ class TwoFactorController extends Controller
             'recovery_codes' => $recoveryCodes
         ]);
     }
+
+    public function getRecoveryCodes(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->two_factor_enabled) {
+            return response()->json([
+                'message' => 'Two-factor authentication is not enabled'
+            ], 400);
+        }
+
+        return response()->json([
+            'recovery_codes' => $user->two_factor_recovery_codes
+        ]);
+    }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,24 @@ export function TwoFactorSettings() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+
+  // Fetch recovery codes when 2FA is enabled
+  useEffect(() => {
+    const fetchRecoveryCodes = async () => {
+      if (user?.two_factor_enabled) {
+        try {
+          const { recovery_codes } = await twoFactorService.getRecoveryCodes();
+          setRecoveryCodes(recovery_codes);
+        } catch (error) {
+          console.error('Failed to fetch recovery codes:', error);
+        }
+      }
+    };
+
+    fetchRecoveryCodes();
+  }, [user?.two_factor_enabled]);
 
   const handleEnable2FA = async () => {
     try {
@@ -103,7 +121,7 @@ export function TwoFactorSettings() {
     try {
       setLoading(true);
       const { recovery_codes } = await twoFactorService.generateRecoveryCodes();
-      setSetupData(prev => prev ? { ...prev, recovery_codes } : null);
+      setRecoveryCodes(recovery_codes);
       toast.success('New recovery codes generated successfully');
     } catch (error: any) {
       toast.error('Failed to generate new recovery codes', {
@@ -137,13 +155,43 @@ export function TwoFactorSettings() {
       </div>
 
       {user?.two_factor_enabled && (
-        <Button
-          variant="outline"
-          onClick={handleGenerateNewRecoveryCodes}
-          disabled={loading}
-        >
-          Generate New Recovery Codes
-        </Button>
+        <div className="space-y-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowRecoveryCodes(!showRecoveryCodes)}
+            className="w-full"
+          >
+            {showRecoveryCodes ? 'Hide Recovery Codes' : 'Show Recovery Codes'}
+          </Button>
+
+          {showRecoveryCodes && (
+            <Card className="p-4">
+              <div className="space-y-2">
+                <Label>Recovery Codes</Label>
+                <div className="space-y-1">
+                  {recoveryCodes.map((code, index) => (
+                    <p key={index} className="font-mono text-sm">{code}</p>
+                  ))}
+                </div>
+                <div className="flex items-start gap-2 mt-3 text-sm text-muted-foreground">
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <p>
+                    Keep these recovery codes in a secure place. You can use them to access your account if you lose your authenticator device.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <Button
+            variant="outline"
+            onClick={handleGenerateNewRecoveryCodes}
+            disabled={loading}
+            className="w-full"
+          >
+            Generate New Recovery Codes
+          </Button>
+        </div>
       )}
 
       {/* Enable 2FA Dialog */}
