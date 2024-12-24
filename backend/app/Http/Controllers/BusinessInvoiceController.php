@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use TCPDF;
 use App\Services\CurrencyService;
 use App\Jobs\SendInvoiceEmail;
+use App\Jobs\SendPaymentReceiptEmail;
 
 class BusinessInvoiceController extends Controller
 {
@@ -354,57 +355,28 @@ class BusinessInvoiceController extends Controller
         }
     }
 
-    public function recordPayment(Request $request, $invoiceId)
+    public function recordPayment(Request $request, $id)
     {
         try {
-            Log::info('Recording payment:', [
-                'invoice_id' => $invoiceId,
-                'request_data' => $request->all()
-            ]);
-
-            $request->validate([
-                'amount' => 'required|numeric|min:0',
-                'payment_date' => 'required|date',
-                'notes' => 'nullable|string'
-            ]);
-
             DB::beginTransaction();
 
-            $invoice = BusinessInvoice::findOrFail($invoiceId);
-
-            // Convert amount to NGN at the time of payment
-            $convertedAmount = $this->currencyService->convertToNGN(
-                $request->amount,
-                $invoice->currency
-            );
-
-            Log::info('Payment conversion:', [
-                'original_amount' => $request->amount,
-                'currency' => $invoice->currency,
-                'converted_amount' => $convertedAmount
-            ]);
-
-            // Create payment record with both original and converted amounts
+            $invoice = BusinessInvoice::findOrFail($id);
+            
             $payment = BusinessInvoicePayment::create([
-                'invoice_id' => $invoiceId,
+                'invoice_id' => $invoice->id,
                 'amount' => $request->amount,
-                'currency' => $invoice->currency,
-                'converted_amount' => $convertedAmount,
-                'payment_date' => $request->payment_date,
+                'payment_method' => $request->payment_method,
+                'payment_date' => now(),
                 'notes' => $request->notes
             ]);
 
-            // Update invoice paid_amount
-            $invoice->paid_amount += $request->amount;
-            
-            // Update invoice status if fully paid
-            if ($invoice->paid_amount >= $invoice->amount) {
-                $invoice->status = 'paid';
-            } else if ($invoice->paid_amount > 0) {
-                $invoice->status = 'partially_paid';
-            }
-            
+            // Update invoice paid amount
+            $invoice->paid_amount = $invoice->payments->sum('amount') + $request->amount;
+            $invoice->status = $invoice->paid_amount >= $invoice->amount ? 'paid' : 'partially_paid';
             $invoice->save();
+
+            // Send payment receipt email
+            SendPaymentReceiptEmail::dispatch($payment);
 
             DB::commit();
 
@@ -415,16 +387,13 @@ class BusinessInvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Error recording invoice payment:', [
-                'invoice_id' => $invoiceId,
+            Log::error('Payment recording failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
-                'message' => 'Failed to record payment',
-                'error' => $e->getMessage()
+                'message' => 'Failed to record payment'
             ], 500);
         }
     }
