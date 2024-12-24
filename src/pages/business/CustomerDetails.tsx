@@ -526,7 +526,7 @@ export default function CustomerDetails() {
                     <div className="min-w-0">
                       <p className="text-sm text-muted-foreground">Total Spent</p>
                       <p className="text-lg font-semibold truncate">
-                        {formatCurrency(customer.total_spent || 0)}
+                        {formatCurrency(customer.total_spent || 0, customer.currency)}
                       </p>
                     </div>
                   </div>
