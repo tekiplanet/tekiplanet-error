@@ -308,6 +308,7 @@ Route::middleware('auth:sanctum')->prefix('business')->group(function () {
         Route::post('/{id}/send', [BusinessInvoiceController::class, 'send']);
         Route::post('/{id}/payments', [BusinessInvoiceController::class, 'recordPayment']);
         Route::patch('/{id}/status', [BusinessInvoiceController::class, 'updateStatus']);
+        Route::get('/{invoice}/payments/{payment}/receipt', [BusinessInvoiceController::class, 'downloadReceipt']);
     });
 
     // Customer invoice routes

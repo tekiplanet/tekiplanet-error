@@ -26,7 +26,8 @@ import {
   Loader2,
   Calendar,
   Plus,
-  MoreVertical
+  MoreVertical,
+  CreditCard
 } from "lucide-react";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { toast } from 'sonner';
@@ -185,6 +186,15 @@ export default function InvoiceDetails() {
       toast.error('Failed to send invoice');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (paymentId: string) => {
+    try {
+      await businessService.downloadReceipt(invoice.id, paymentId);
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download receipt');
     }
   };
 
@@ -477,77 +487,52 @@ export default function InvoiceDetails() {
             </TabsContent>
 
             <TabsContent value="payments" className="space-y-4 mt-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Payment History</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {invoice.paid_amount === 0 ? (
-                        'No payments recorded yet'
-                      ) : (
-                        `${formatCurrency(invoice.paid_amount, invoice.currency)} paid of ${formatCurrency(invoice.amount, invoice.currency)}`
-                      )}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => setIsPaymentFormOpen(true)}
-                    disabled={invoice.status === 'paid'}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Record Payment
-                  </Button>
-                </div>
-
-                {invoice.payments?.length > 0 ? (
-                  <div className="space-y-4">
-                    {invoice.payments.map((payment) => (
-                      <div
-                        key={payment.id}
-                        className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!invoice.payments?.length ? (
+                    <EmptyState
+                      icon={CreditCard}
+                      title="No payments yet"
+                      description="No payments have been recorded for this invoice."
+                    />
+                  ) : (
+                    <div className="space-y-4">
+                      {invoice.payments.map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
                           <div>
                             <p className="font-medium">
                               {formatCurrency(payment.amount, invoice.currency)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Recorded on {formatDate(payment.payment_date)}
+                              {formatDate(payment.payment_date)}
                             </p>
                             {payment.notes && (
-                              <p className="mt-2 text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground mt-1">
                                 {payment.notes}
                               </p>
                             )}
                           </div>
-                          <Badge variant="outline">
-                            Payment #{payment.id.split('-')[0]}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownloadReceipt(payment.id)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="border-none bg-card w-full overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="text-center py-8 text-muted-foreground">
-                        <DollarSign className="h-8 w-8 mx-auto mb-4 opacity-50" />
-                        <p>No payments have been recorded yet</p>
-                        {invoice.status !== 'paid' && (
-                          <Button
-                            variant="outline"
-                            className="mt-4"
-                            onClick={() => setIsPaymentFormOpen(true)}
-                          >
-                            Record First Payment
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="activity" className="space-y-4 mt-4">

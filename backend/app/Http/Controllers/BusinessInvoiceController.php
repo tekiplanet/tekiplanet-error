@@ -17,6 +17,7 @@ use TCPDF;
 use App\Services\CurrencyService;
 use App\Jobs\SendInvoiceEmail;
 use App\Jobs\SendPaymentReceiptEmail;
+use PDF;
 
 class BusinessInvoiceController extends Controller
 {
@@ -611,6 +612,51 @@ class BusinessInvoiceController extends Controller
                 'message' => 'Invoice not found',
                 'error' => $e->getMessage()
             ], 404);
+        }
+    }
+
+    public function downloadReceipt($invoiceId, $paymentId)
+    {
+        try {
+            $payment = BusinessInvoicePayment::with(['invoice.business', 'invoice.customer'])
+                ->findOrFail($paymentId);
+            
+            // Check if payment belongs to the invoice
+            if ($payment->invoice_id !== $invoiceId) {
+                throw new \Exception('Payment does not belong to this invoice');
+            }
+
+            // Generate receipt PDF
+            $pdf = PDF::loadView('receipts.payment', [
+                'payment' => $payment,
+                'invoice' => $payment->invoice
+            ]);
+
+            // Set custom paper size for receipt
+            $pdf->setPaper([0, 0, 226.77, 425.197]); // 80mm x 150mm in points
+
+            return response()->streamDownload(
+                function () use ($pdf) {
+                    echo $pdf->output();
+                },
+                "receipt-{$payment->id}.pdf",
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0'
+                ]
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Receipt download failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Failed to download receipt'
+            ], 500);
         }
     }
 } 
