@@ -548,14 +548,14 @@ class EnrollmentController extends Controller
             ], 400);
         }
 
-        // Find the earliest unpaid installment for this enrollment
-        $earliestUnpaidInstallment = Installment::where('enrollment_id', $installment->enrollment_id)
+        // Find any unpaid installments with a lower order number
+        $earlierUnpaidInstallments = Installment::where('enrollment_id', $installment->enrollment_id)
             ->where('status', '!=', 'paid')
-            ->orderBy('order', 'asc')
-            ->first();
+            ->where('order', '<', $installment->order)
+            ->exists();
 
         // Check if trying to pay an installment out of order
-        if ($earliestUnpaidInstallment && $earliestUnpaidInstallment->id !== $installment->id) {
+        if ($earlierUnpaidInstallments) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please pay the earliest due installment first'

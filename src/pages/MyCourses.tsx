@@ -732,7 +732,7 @@ export default function MyCourses() {
                           .sort((a, b) => (a.order || 0) - (b.order || 0))
                             .map((installment, index) => {
                               const sortedInstallments = [...enrollment.installments]
-                                .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+                              .sort((a, b) => (a.order || 0) - (b.order || 0));
                               const currentInstallmentIndex = sortedInstallments
                                 .findIndex(inst => inst.id === installment.id);
                               const previousInstallmentsPaid = sortedInstallments
@@ -862,8 +862,12 @@ export default function MyCourses() {
             handleFullPaymentConfirm();
           } else {
             // Process the first installment
-            const selectedInstallment = selectedCourse?.installments?.[0];
-            
+              // Find the earliest unpaid installment by order
+              const selectedInstallment = selectedCourse?.installments
+                ?.sort((a, b) => (a.order || 0) - (b.order || 0))
+                ?.find(inst => inst.status !== 'paid');
+  
+  
             if (!selectedCourse || !selectedInstallment) {
               toast.error('Invalid course or installment');
               return;
