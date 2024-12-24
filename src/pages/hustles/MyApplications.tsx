@@ -17,12 +17,18 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { hustleService } from '@/services/hustleService';
+import { settingsService } from '@/services/settingsService';
 import { formatCurrency, formatDate, formatShortDate, cn } from '@/lib/utils';
 import WithdrawApplicationDialog from '@/components/hustles/WithdrawApplicationDialog';
 
 const MyApplications = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: settingsService.getAllSettings,
+  });
 
   const { data: applications, isLoading } = useQuery({
     queryKey: ['my-applications'],
@@ -152,7 +158,7 @@ const MyApplications = () => {
                       Budget
                     </p>
                     <p className="text-sm font-medium">
-                      {formatCurrency(application.hustle.budget)}
+                      {formatCurrency(application.hustle.budget, settings?.default_currency)}
                     </p>
                   </div>
                 </div>
@@ -224,4 +230,4 @@ const MyApplications = () => {
   );
 };
 
-export default MyApplications; 
+export default MyApplications;
