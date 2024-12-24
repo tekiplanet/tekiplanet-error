@@ -93,5 +93,14 @@ export const businessService = {
       console.error('Error fetching activities:', error);
       throw error;
     }
+  },
+  async checkProfessional() {
+    try {
+      const response = await api.get('/professional/profile/check');
+      return response.data;
+    } catch (error) {
+      console.error('Error checking professional profile:', error);
+      throw error;
+    }
   }
 }; 

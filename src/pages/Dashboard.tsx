@@ -104,6 +104,13 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
     }
   });
 
+  const { data: professionalData } = useQuery({
+    queryKey: ['professional-profile'],
+    queryFn: businessService.checkProfessional,
+    retry: false,
+    enabled: true
+  });
+
   const handleProfileSwitch = async (type: 'student' | 'business' | 'professional') => {
     try {
       await updateUserType(type);
@@ -428,7 +435,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   </Button>
                 ))}
 
-                {/* Learning */}
+                {/* Learning - Shows only when switched to student profile */}
                 {user?.account_type === 'student' && (
                   <div className="space-y-1">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Learning</h4>
@@ -466,8 +473,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   </div>
                 )}
 
-                {/* Business - Shows only if user has active business profile */}
-                {profileData?.has_profile && profileData?.profile?.status === 'active' && (
+                {/* Business - Shows only when switched to business profile AND has active business profile */}
+                {user?.account_type === 'business' && profileData?.has_profile && profileData?.profile?.status === 'active' && (
                   <div className="space-y-1">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                     {menuItems.slice(6, 8).map((item) => (
@@ -504,8 +511,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   </div>
                 )}
 
-                {/* Professional */}
-                {user?.account_type === 'professional' && (
+                {/* Professional - Shows only when switched to professional profile AND has active professional profile */}
+                {user?.account_type === 'professional' && professionalData?.has_profile && professionalData?.profile?.status === 'active' && (
                   <div className="space-y-1">
                     <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Professional</h4>
                     {menuItems.slice(8, 10).map((item) => (
@@ -1004,7 +1011,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                           ))}
                         </div>
 
-                        {/* Learning - Shows only for students */}
+                        {/* Learning - Shows only when switched to student profile */}
                         {user?.account_type === 'student' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Learning</h4>
@@ -1042,8 +1049,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                           </div>
                         )}
 
-                        {/* Business - Shows only if user has active business profile */}
-                        {profileData?.has_profile && profileData?.profile?.status === 'active' && (
+                        {/* Business - Shows only when switched to business profile AND has active business profile */}
+                        {user?.account_type === 'business' && profileData?.has_profile && profileData?.profile?.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Business</h4>
                             {menuItems.slice(6, 8).map((item) => (
@@ -1080,8 +1087,8 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                           </div>
                         )}
 
-                        {/* Professional - Shows only for professional accounts */}
-                        {user?.account_type === 'professional' && (
+                        {/* Professional - Shows only when switched to professional profile AND has active professional profile */}
+                        {user?.account_type === 'professional' && professionalData?.has_profile && professionalData?.profile?.status === 'active' && (
                           <div className="space-y-1">
                             <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Professional</h4>
                             {menuItems.slice(8, 10).map((item) => (
