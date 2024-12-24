@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use PragmaRX\Google2FA\Google2FA;
 
 class AuthController extends Controller
 {
@@ -51,17 +52,38 @@ class AuthController extends Controller
     {
         $request->validate([
             'login' => 'required',
-            'password' => 'required'
+            'password' => 'required',
+            'code' => 'nullable|string|size:6'
         ]);
 
         $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
         $user = User::where($loginField, $request->login)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'login' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        // Check if 2FA is enabled and code is required
+        if ($user->two_factor_enabled) {
+            // If no code provided, return that 2FA is required
+            if (!$request->code) {
+                return response()->json([
+                    'requires_2fa' => true,
+                    'message' => 'Two-factor authentication code required'
+                ], 200);
+            }
+
+            // Verify 2FA code
+            $google2fa = new Google2FA();
+            $valid = $google2fa->verifyKey($user->two_factor_secret, $request->code);
+
+            if (!$valid) {
+                throw ValidationException::withMessages([
+                    'code' => ['The provided two-factor code is incorrect.'],
+                ]);
+            }
         }
 
         // Revoke all existing tokens for this user

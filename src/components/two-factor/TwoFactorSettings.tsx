@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 export function TwoFactorSettings() {
   const { user, updateUser, initialize } = useAuthStore();
@@ -189,7 +189,14 @@ export function TwoFactorSettings() {
             disabled={loading}
             className="w-full"
           >
-            Generate New Recovery Codes
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              'Generate New Recovery Codes'
+            )}
           </Button>
         </div>
       )}

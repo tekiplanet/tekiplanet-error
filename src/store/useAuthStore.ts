@@ -36,7 +36,7 @@ type AuthState = {
   theme: 'light' | 'dark';
   isAuthenticated: boolean;
   setTheme: (theme: 'light' | 'dark') => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (login: string, password: string, code?: string) => Promise<any>;
   logout: () => void;
   updateUser: (userData: Partial<UserData>) => Promise<boolean>;
   updateUserPreferences: (preferences: UserPreferences) => Promise<UserData>;
@@ -189,27 +189,41 @@ const useAuthStore = create<AuthState>(
         }
       },
 
-      login: async (email: string, password: string) => {
+      login: async (login: string, password: string, code?: string) => {
         try {
-          const { user, token } = await authService.login({ login: email, password });
+          console.log('Attempting login with:', { login, has2FACode: !!code });
           
-          // Persist token in localStorage
-          localStorage.setItem('token', token);
-          
-          set({ 
-            user, 
-            token, 
-            isAuthenticated: true,
-            theme: user.dark_mode ? 'dark' : 'light'
-          });
+          const response = await authService.login({ login, password, code });
+          console.log('Login response:', response);
 
-          // Update theme in localStorage
-          localStorage.setItem('theme', user.dark_mode ? 'dark' : 'light');
+          // If 2FA is required, return the response without setting auth state
+          if (response.requires_2fa) {
+            console.log('2FA required');
+            return response;
+          }
 
-          // Immediately fetch fresh user data
-          await get().initialize();
+          // If we have a token and user data, set them
+          if (response.token && response.user) {
+            console.log('Login successful, setting auth state');
+            
+            // Persist token in localStorage
+            localStorage.setItem('token', response.token);
+            
+            set({
+              token: response.token,
+              user: response.user,
+              isAuthenticated: true,
+              theme: response.user.dark_mode ? 'dark' : 'light'
+            });
+
+            // Update theme in localStorage
+            localStorage.setItem('theme', response.user.dark_mode ? 'dark' : 'light');
+          }
+
+          return response;
         } catch (error) {
-          console.error('Login failed:', error);
+          console.error('Login error:', error);
+          // Clear auth state on error
           set({ 
             user: null, 
             token: null, 

@@ -1,3 +1,5 @@
+import { apiClient } from '@/lib/axios';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 interface LoginData {
@@ -24,6 +26,10 @@ interface UserData {
   last_name?: string;
   wallet_balance?: number;
   two_factor_enabled?: boolean;
+  dark_mode?: boolean;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  marketing_notifications?: boolean;
 }
 
 interface User {
@@ -38,95 +44,32 @@ interface UserPreferences {
   marketing_notifications?: boolean;
 }
 
+interface LoginResponse {
+  token?: string;
+  user?: UserData;
+  requires_2fa?: boolean;
+  message?: string;
+}
+
 export const authService = {
-  async login(credentials: { login: string; password: string }): Promise<{ user: UserData; token: string }> {
+  async login(credentials: { login: string; password: string; code?: string }): Promise<LoginResponse> {
     try {
       // Validate input
       if (!credentials || !credentials.login || !credentials.password) {
         throw new Error('Invalid login credentials');
       }
 
-      console.log('Login attempt with credentials:', {
-        login: credentials.login,
-        // Mask password for security
-        passwordLength: credentials.password?.length || 0
-      });
-
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        credentials: 'include', // Important for CORS with credentials
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Access-Control-Allow-Credentials': 'true'
-        },
-        body: JSON.stringify(credentials)
-      });
-
-      // Detailed logging
-      console.log('Login response:', {
-        status: response.status,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-
-      // Parse response body once
-      const responseBody = await response.text();
-      console.log('Raw response body:', responseBody);  // Add this line for debugging
-
-      if (!response.ok) {
-        console.error('Login error response:', responseBody);
-        
-        // Enhanced error handling
-        let errorMessage = 'Login failed';
-        try {
-          const errorJson = JSON.parse(responseBody);
-          errorMessage = errorJson.message || errorJson.error || (errorJson.errors ? Object.values(errorJson.errors).flat()[0] : errorMessage);
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-          errorMessage = responseBody || errorMessage;
-        }
-
-        // Specific status code handling
-        switch (response.status) {
-          case 401:
-            errorMessage = 'Invalid credentials. Please check your email/username and password.';
-            break;
-          case 429:
-            errorMessage = 'Too many login attempts. Please wait a moment and try again.';
-            break;
-          case 500:
-            errorMessage = 'Server error. Please try again later.';
-            break;
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      // Parse JSON response
-      let data;
-      try {
-        data = JSON.parse(responseBody);
-        console.log('Parsed login response:', data);
-      } catch (parseError) {
-        console.error('Failed to parse login response:', parseError);
-        throw new Error('Invalid server response');
-      }
-
-      // Ensure user data is complete
-      if (!data.user || !data.token) {
-        throw new Error('Invalid login response');
-      }
-
-      return {
-        user: {
-          ...data.user,
-          wallet_balance: Number(data.user.wallet_balance || 0)
-        },
-        token: data.token
-      };
-    } catch (error) {
+      const response = await apiClient.post<LoginResponse>('login', credentials);
+      
+      console.log('Login response:', response.data);
+      return response.data;
+    } catch (error: any) {
       console.error('Login error:', error);
+      
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      
       throw error;
     }
   },

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use PragmaRX\Google2FA\Google2FA;
 
 class LoginController extends Controller
 {
@@ -23,6 +24,7 @@ class LoginController extends Controller
 
         $loginField = $request->input('login');
         $password = $request->input('password');
+        $code = $request->input('code');
 
         if (empty($loginField) || empty($password)) {
             Log::warning('Login failed: empty login or password', [
@@ -48,6 +50,27 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+
+            // Check if 2FA is enabled
+            if ($user->two_factor_enabled) {
+                // If no code provided, return that 2FA is required
+                if (!$code) {
+                    return response()->json([
+                        'requires_2fa' => true,
+                        'message' => 'Two-factor authentication code required'
+                    ], 200);
+                }
+
+                // Verify 2FA code
+                $google2fa = new Google2FA();
+                $valid = $google2fa->verifyKey($user->two_factor_secret, $code);
+
+                if (!$valid) {
+                    return response()->json([
+                        'message' => 'Invalid two-factor authentication code'
+                    ], 422);
+                }
+            }
             
             // Generate a token for the user
             $token = $user->createToken('login_token')->plainTextToken;
