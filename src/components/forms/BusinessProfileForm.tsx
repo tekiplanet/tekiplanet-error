@@ -85,21 +85,34 @@ const steps: FormStep[] = [
 ];
 
 const businessTypes = [
-  'Retail',
-  'E-commerce',
-  'Service',
-  'Manufacturing',
-  'Technology',
+  'Agriculture',
+  'Automotive',
   'Consulting',
-  'Healthcare',
+  'Construction',
+  'E-commerce',
   'Education',
+  'Entertainment',
+  'Fashion',
+  'Finance',
   'Food & Beverage',
+  'Healthcare',
+  'Hospitality',
+  'Logistics',
+  'Manufacturing',
+  'Media',
+  'Non-profit',
   'Real Estate',
+  'Retail',
+  'Service',
+  'Technology',
+  'Tourism',
+  'Transport',
   'Other'
 ];
 
 const nigerianStates = [
   "Abia",
+  "Abuja",
   "Adamawa",
   "Akwa Ibom",
   "Anambra",
