@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
+import { transactionService } from '@/services/transactionService';
 
 interface WithdrawalModalProps {
   open: boolean;
@@ -183,13 +184,30 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
     }
 
     if (settings) {
+      // Check minimum withdrawal amount
       if (amountNum < settings.min_withdrawal_amount) {
         toast.error(`Minimum withdrawal amount is ${formatCurrency(settings.min_withdrawal_amount, settings.default_currency)}`);
         return;
       }
 
+      // Check maximum withdrawal amount
       if (amountNum > settings.max_withdrawal_amount) {
         toast.error(`Maximum withdrawal amount is ${formatCurrency(settings.max_withdrawal_amount, settings.default_currency)}`);
+        return;
+      }
+
+      console.log('Transactions data:', transactions);
+      console.log('Type of transactions:', typeof transactions);
+
+      // Check daily withdrawal limit
+      const todayWithdrawals = Array.isArray(transactions) ? transactions.filter(t => 
+        t.type === 'debit' && 
+        t.category === 'withdrawal' &&
+        new Date(t.created_at).toDateString() === new Date().toDateString()
+      ).reduce((sum, t) => sum + parseFloat(t.amount), 0) || 0 : 0;
+
+      if ((todayWithdrawals + amountNum) > settings.daily_withdrawal_limit) {
+        toast.error(`Daily withdrawal limit (${formatCurrency(settings.daily_withdrawal_limit, settings.default_currency)}) exceeded`);
         return;
       }
     }
@@ -475,6 +493,11 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
       </div>
     );
   };
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: transactionService.getUserTransactions
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
