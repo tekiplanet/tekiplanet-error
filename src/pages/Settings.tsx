@@ -41,6 +41,7 @@ import { TagInput } from "@/components/ui/tag-input";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { EXPERTISE_AREAS, LANGUAGES } from "@/lib/constants/professional";
+import { TwoFactorSettings } from "@/components/two-factor/TwoFactorSettings";
 
 // Animation variants
 const pageTransition = {
@@ -1442,25 +1443,7 @@ const Settings = () => {
           id: 'two-factor',
           title: 'Two-Factor Authentication',
           description: 'Add an extra layer of security',
-          component: (
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">
-                  Protect your account with 2FA
-                      </p>
-                    </div>
-              <Switch 
-                checked={false}
-                onCheckedChange={() => {
-                  toast({
-                    title: "Coming Soon",
-                    description: "This feature will be available soon.",
-                  });
-                }}
-              />
-                  </div>
-          )
+          component: <TwoFactorSettings />
         }
       ]
     },

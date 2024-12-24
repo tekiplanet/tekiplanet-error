@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\UserPreferencesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TransactionController;
@@ -124,6 +125,16 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Student Dashboard Route
         Route::get('/student/dashboard', [StudentDashboardController::class, 'getDashboardData']);
+        
+        // Two Factor Authentication Routes
+        Route::prefix('auth/2fa')->group(function () {
+            Route::post('enable', [TwoFactorController::class, 'enable']);
+            Route::post('verify', [TwoFactorController::class, 'verify']);
+            Route::post('disable', [TwoFactorController::class, 'disable']);
+            Route::post('validate', [TwoFactorController::class, 'validateCode']);
+            Route::post('validate-recovery', [TwoFactorController::class, 'validateRecoveryCode']);
+            Route::post('recovery-codes', [TwoFactorController::class, 'generateRecoveryCodes']);
+        });
     });
 });
 
