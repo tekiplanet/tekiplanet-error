@@ -1,5 +1,18 @@
 import { apiClient } from '@/lib/api-client';
 
+export interface CreateCustomerDto {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  currency: string;
+  notes?: string;
+  tags?: string[];
+}
+
 export interface BusinessProfile {
   id: string;
   business_name: string;
@@ -113,6 +126,33 @@ export const businessService = {
       return response.data;
     } catch (error) {
       console.error('Error creating business profile:', error);
+      throw error;
+    }
+  },
+  async createCustomer(data: CreateCustomerDto) {
+    try {
+      const response = await apiClient.post('/business/customers', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      throw error;
+    }
+  },
+  async updateCustomer(id: string, data: CreateCustomerDto) {
+    try {
+      const response = await apiClient.put(`/business/customers/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      throw error;
+    }
+  },
+  async getCustomer(id: string) {
+    try {
+      const response = await apiClient.get(`/business/customers/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching customer:', error);
       throw error;
     }
   }

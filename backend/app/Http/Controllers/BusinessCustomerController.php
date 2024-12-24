@@ -72,10 +72,13 @@ class BusinessCustomerController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|min:2',
-                'email' => 'required|email',
-                'phone' => 'required|string|min:10',
+                'email' => 'nullable|email',
+                'phone' => 'nullable|string',
                 'currency' => 'required|string|size:3',
                 'address' => 'nullable|string',
+                'city' => 'required|string|min:2',
+                'state' => 'required|string|min:2',
+                'country' => 'required|string|min:2',
                 'tags' => 'nullable|array',
                 'tags.*' => 'string'
             ]);
@@ -96,6 +99,9 @@ class BusinessCustomerController extends Controller
                 'phone' => $request->phone,
                 'currency' => $request->currency,
                 'address' => $request->address,
+                'city' => $request->city,
+                'state' => $request->state,
+                'country' => $request->country,
                 'tags' => $request->tags ?? []
             ]);
 

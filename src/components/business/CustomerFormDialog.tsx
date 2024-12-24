@@ -25,7 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useQueryClient } from '@tanstack/react-query';
 import { businessService } from '@/services/businessService';
-import { CreateCustomerDto, CustomerDto } from '@/types/business';
+import { CreateCustomerDto } from '@/services/businessService';
+import { CustomerDto } from '@/types/business';
 import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { getAllCountries, getStatesByCountry } from '@/data/locations';
@@ -143,19 +144,31 @@ export default function CustomerFormDialog({
         tags: Array.isArray(values.tags) ? values.tags : []
       } satisfies CreateCustomerDto;
 
+      console.log('Form values:', values);
+      console.log('Prepared customer data:', customerData);
+
       if (mode === 'create') {
-        console.log('Submitting customer data:', customerData);
-        await businessService.createCustomer(customerData);
+        console.log('Creating new customer...');
+        const response = await businessService.createCustomer(customerData);
+        console.log('Create customer response:', response);
         toast.success('Customer created successfully');
       } else {
         if (!customer?.id) return;
-        await businessService.updateCustomer(customer.id, customerData);
+        console.log('Updating customer...');
+        const response = await businessService.updateCustomer(customer.id, customerData);
+        console.log('Update customer response:', response);
         toast.success('Customer updated successfully');
       }
       queryClient.invalidateQueries({ queryKey: ['business-customers'] });
       onOpenChange(false);
       form.reset();
     } catch (error: any) {
+      console.error('Error in customer form submission:', error);
+      console.error('Error details:', {
+        response: error.response?.data,
+        status: error.response?.status,
+        message: error.message
+      });
       toast.error(
         'Failed to save customer',
         { description: error.response?.data?.message || 'Please try again' }
