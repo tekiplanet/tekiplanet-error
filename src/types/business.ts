@@ -1,19 +1,18 @@
 export interface Customer {
   id: string;
-  business_id: string;
   name: string;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
+  email: string;
+  phone: string;
+  address?: string;
+  city: string;
+  state: string;
+  country: string;
   currency: string;
-  tags: string[];
-  notes: string | null;
-  status: 'active' | 'inactive';
+  tags?: string[];
+  notes?: string;
+  status: string;
   total_spent: number;
-  last_order_date: string | null;
+  last_order_date?: string | null;
   created_at: string;
   updated_at: string;
 }

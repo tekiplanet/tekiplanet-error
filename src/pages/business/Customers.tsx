@@ -47,6 +47,13 @@ const CustomerCard = ({
   onEdit: (customer: Customer) => void;
   onDelete: (customer: Customer) => void;
 }) => {
+  console.log('CustomerCard values:', {
+    name: customer.name,
+    total_spent: customer.total_spent,
+    total_spent_type: typeof customer.total_spent,
+    currency: customer.currency
+  });
+
   const navigate = useNavigate();
 
   return (
@@ -113,11 +120,13 @@ const CustomerCard = ({
         <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
           <div>
             <p className="text-muted-foreground text-xs">Total Spent</p>
-            <p className="font-medium truncate">{formatCurrency(customer.total_spent, customer.currency)}</p>
+            <p className="font-medium truncate">
+              {formatCurrency(customer.total_spent || 0, customer.currency)}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-muted-foreground text-xs">Last Order</p>
-            <p className="font-medium truncate">{customer.last_order_date}</p>
+            <p className="font-medium truncate">{customer.last_order_date || 'No orders yet'}</p>
           </div>
         </div>
       </div>
@@ -162,13 +171,18 @@ export default function Customers() {
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ['business-customers', searchQuery],
     queryFn: async () => {
+      console.log('Starting customer fetch with search:', searchQuery);
       const response = await businessService.getCustomers({ 
         search: searchQuery || undefined
       });
+      console.log('Raw API response:', response);
       return response;
     },
     initialData: [],
-    select: (data) => data || [],
+    select: (data) => {
+      console.log('Select function data:', data);
+      return data || [];
+    },
   });
 
   const filteredCustomers = React.useMemo(() => {

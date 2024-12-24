@@ -232,12 +232,14 @@ export const businessService = {
   },
   getCustomers: async ({ search }: { search?: string } = {}) => {
     try {
+      console.log('businessService.getCustomers called with:', { search });
       const response = await apiClient.get(search 
-        ? '/business/customers/search'  // Use search endpoint if search param exists
-        : '/business/customers'         // Use list endpoint if no search param
+        ? '/business/customers/search'
+        : '/business/customers'
       , {
         params: search ? { search } : undefined
       });
+      console.log('businessService.getCustomers response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching customers:', error);

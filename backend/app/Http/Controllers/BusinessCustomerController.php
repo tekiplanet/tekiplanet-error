@@ -40,18 +40,12 @@ class BusinessCustomerController extends Controller
                         'tags' => $customer->tags,
                         'notes' => $customer->notes,
                         'status' => $customer->status,
-                        'total_spent' => $customer->getTotalSpent(), // Using the model method
-                        'last_order_date' => null, // Update this when you have orders
+                        'total_spent' => $customer->getTotalSpent(),
+                        'last_order_date' => null,
                         'created_at' => $customer->created_at,
                         'updated_at' => $customer->updated_at
                     ];
                 });
-
-            \Log::info('Fetched customers:', [
-                'count' => $customers->count(),
-                'business_id' => $businessProfile->id,
-                'customers' => $customers->toArray()
-            ]);
 
             return response()->json($customers);
         } catch (\Exception $e) {
@@ -284,9 +278,6 @@ class BusinessCustomerController extends Controller
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('phone', 'like', "%{$search}%");
                 })
-                ->select('id', 'name', 'email', 'phone', 'currency')
-                ->orderBy('name')
-                ->limit(10)
                 ->get()
                 ->map(function ($customer) {
                     return [
@@ -294,15 +285,22 @@ class BusinessCustomerController extends Controller
                         'name' => $customer->name,
                         'email' => $customer->email,
                         'phone' => $customer->phone,
+                        'address' => $customer->address,
+                        'city' => $customer->city,
+                        'state' => $customer->state,
+                        'country' => $customer->country,
                         'currency' => $customer->currency,
-                        'total_spent' => $customer->getTotalSpent(),
                         'tags' => $customer->tags,
-                        'created_at' => $customer->created_at
+                        'notes' => $customer->notes,
+                        'status' => $customer->status,
+                        'total_spent' => $customer->getTotalSpent(),
+                        'last_order_date' => null,
+                        'created_at' => $customer->created_at,
+                        'updated_at' => $customer->updated_at
                     ];
                 });
 
-            return response()->json($customers->toArray());
-
+            return response()->json($customers);
         } catch (\Exception $e) {
             Log::error('Error searching customers:', [
                 'error' => $e->getMessage(),

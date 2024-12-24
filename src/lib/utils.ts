@@ -6,12 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-  }).format(amount);
-}
+export const formatCurrency = (amount: number, currency: string = 'USD') => {
+  console.log('formatCurrency input:', { amount, currency });
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    return `${currency} ${amount}`;
+  }
+};
 
 export const PLAN_HIERARCHY = {
   1: 'daily',     // duration_days: 1
