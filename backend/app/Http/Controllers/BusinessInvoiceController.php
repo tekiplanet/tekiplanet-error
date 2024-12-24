@@ -180,7 +180,7 @@ class BusinessInvoiceController extends Controller
 
             // Generate PDF
             $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-            
+
             // Set document information
             $pdf->SetCreator(PDF_CREATOR);
             $pdf->SetAuthor($invoice->business->business_name);
@@ -319,7 +319,7 @@ class BusinessInvoiceController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to download invoice'
             ], 500);
@@ -329,29 +329,76 @@ class BusinessInvoiceController extends Controller
     public function send($id)
     {
         try {
-            $invoice = BusinessInvoice::with(['items', 'business', 'customer'])
+            // Debug log 1
+            Log::info('1. Starting send process', ['invoice_id' => $id]);
+
+            // Load invoice with all needed relationships
+            $invoice = BusinessInvoice::with(['business', 'customer', 'items'])
                 ->findOrFail($id);
 
-            // Queue the email sending process
+            // Debug log 2
+            Log::info('2. Invoice data:', [
+                'invoice_id' => $id,
+                'business_id' => $invoice->business_id,
+                'customer_id' => $invoice->customer_id,
+                'business_exists' => isset($invoice->business),
+                'customer_exists' => isset($invoice->customer),
+                'items_count' => $invoice->items->count(),
+                'status' => $invoice->status,
+                'theme_color' => $invoice->theme_color
+            ]);
+
+            // Debug log 3
+            if ($invoice->business) {
+                Log::info('3. Business data:', [
+                    'name' => $invoice->business->business_name,
+                    'email' => $invoice->business->business_email,
+                    'phone' => $invoice->business->phone_number
+                ]);
+            }
+
+            // Debug log 4
+            if ($invoice->customer) {
+                Log::info('4. Customer data:', [
+                    'name' => $invoice->customer->name,
+                    'email' => $invoice->customer->email,
+                    'phone' => $invoice->customer->phone
+                ]);
+            }
+
+            // Check if business and customer exist
+            if (!$invoice->business || !$invoice->customer) {
+                throw new \Exception('Missing business or customer data');
+            }
+
+            // Debug log 5
+            Log::info('5. About to dispatch email job');
+
+            // Queue the email job
             SendInvoiceEmail::dispatch($invoice);
-            
-            // Update status immediately
+
+            // Debug log 6
+            Log::info('6. Email job dispatched');
+
+            // Update status
             $invoice->update([
-                'status' => 'sent',
-                'sent_at' => now()
+                'status' => 'sent'
             ]);
 
             return response()->json([
                 'message' => 'Invoice sent successfully'
             ]);
+
         } catch (\Exception $e) {
             Log::error('Invoice sending failed:', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
             ]);
-            
+
             return response()->json([
-                'message' => 'Failed to send invoice'
+                'message' => 'Failed to send invoice: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -403,7 +450,7 @@ class BusinessInvoiceController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to record payment'
             ], 500);

@@ -1,3 +1,11 @@
+@php
+$themeColor = $invoice->theme_color ?? '#0000FF';
+$rgb = sscanf($themeColor, "#%02x%02x%02x");
+if (!$rgb) {
+    $rgb = [0, 0, 255]; // default blue if theme color is invalid
+}
+@endphp
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,17 +17,17 @@
             line-height: 1.6;
         }
         .header { 
-            color: rgb({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }}); 
+            color: rgb({{ implode(',', $rgb) }}); 
         }
         .status { 
             padding: 5px 10px;
             color: white;
-            background-color: rgb({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }});
+            background-color: rgb({{ implode(',', $rgb) }});
             display: inline-block;
             border-radius: 4px;
         }
         .total-section {
-            background-color: rgba({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }}, 0.95);
+            background-color: rgba({{ implode(',', $rgb) }}, 0.95);
             color: white;
             padding: 10px;
         }
@@ -33,7 +41,7 @@
             border: 1px solid #ddd;
         }
         th {
-            background-color: rgb({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }});
+            background-color: rgb({{ implode(',', $rgb) }});
             color: white;
         }
     </style>
@@ -42,7 +50,7 @@
     <h1 class="header">INVOICE</h1>
     
     <div style="margin-bottom: 20px;">
-        <strong style="color: rgb({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }});">
+        <strong style="color: rgb({{ implode(',', $rgb) }});">
             {{ $invoice->business->business_name }}
         </strong><br>
         {{ $invoice->business->address }}<br>
@@ -106,7 +114,7 @@
 
     @if($invoice->notes)
     <div style="margin-top: 20px;">
-        <strong style="color: rgb({{ implode(',', sscanf($invoice->theme_color ?? '#0000FF', "#%02x%02x%02x")) }});">Notes:</strong><br>
+        <strong style="color: rgb({{ implode(',', $rgb) }});">Notes:</strong><br>
         {{ $invoice->notes }}
     </div>
     @endif

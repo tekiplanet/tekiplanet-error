@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\BusinessInvoice;
+use Illuminate\Support\Facades\Log;
 use PDF;
 use Mail;
 
@@ -24,17 +25,44 @@ class SendInvoiceEmail implements ShouldQueue
 
     public function handle()
     {
-        $pdf = PDF::loadView('invoices.template', [
-            'invoice' => $this->invoice
-        ]);
+        try {
+            // Reload invoice with relationships to ensure we have fresh data
+            $invoice = BusinessInvoice::with(['items', 'business', 'customer'])
+                ->findOrFail($this->invoice->id);
 
-        Mail::send('emails.invoice', ['invoice' => $this->invoice], function ($message) use ($pdf) {
-            $message->to($this->invoice->customer->email)
-                   ->subject("Invoice #{$this->invoice->invoice_number}")
-                   ->attachData(
-                       $pdf->output(),
-                       "invoice-{$this->invoice->invoice_number}.pdf"
-                   );
-        });
+            Log::info('Preparing to send invoice email', [
+                'invoice_id' => $invoice->id,
+                'customer_email' => $invoice->customer->email ?? 'no email'
+            ]);
+
+            // Generate PDF
+            $pdf = PDF::loadView('invoices.template', [
+                'invoice' => $invoice
+            ]);
+
+            // Send email
+            Mail::send('emails.invoice', ['invoice' => $invoice], function ($message) use ($pdf, $invoice) {
+                $message->to($invoice->customer->email)
+                       ->subject("Invoice #{$invoice->invoice_number}")
+                       ->attachData(
+                           $pdf->output(),
+                           "invoice-{$invoice->invoice_number}.pdf"
+                       );
+            });
+
+            Log::info('Invoice email sent successfully', [
+                'invoice_id' => $invoice->id,
+                'customer_email' => $invoice->customer->email
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send invoice email:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'invoice_id' => $this->invoice->id
+            ]);
+            
+            throw $e;
+        }
     }
 } 
