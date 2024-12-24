@@ -172,6 +172,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
         App\Providers\SettingsServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
     ])->toArray(),
 
     /*

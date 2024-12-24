@@ -17,23 +17,13 @@ return [
 
 
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
+    'paths' => ['*', 'api/*', 'broadcasting/auth', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        env('FRONTEND_URL', 'http://localhost:5173'),
-        'http://localhost:3000',
-        'http://localhost:8080',
-        'http://localhost',
-    ],
+    'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => [
-        // Allow all localhost ports
-        '#^http://localhost:[0-9]+$#',
-        // Allow all 192.168.* IP addresses
-        '#^http://192\.168\.[0-9]+\.[0-9]+:[0-9]+$#'
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 

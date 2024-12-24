@@ -59,6 +59,12 @@ import PullToRefresh from 'react-simple-pull-to-refresh';
 import { Loader2 } from "lucide-react";
 import { businessService } from '@/services/businessService';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useNotifications } from '@/contexts/NotificationContext';
+import { apiClient } from '@/lib/axios';
+import { formatRelativeTime } from '@/utils/dateUtils';
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { formatDistanceToNow } from 'date-fns'
+import { Trash2, CheckCheck, ExternalLink } from 'lucide-react'
 
 interface MenuItem {
   label: string;
@@ -78,6 +84,12 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+
+  useEffect(() => {
+    console.log('Dashboard received notifications:', notifications);
+    console.log('Dashboard unread count:', unreadCount);
+  }, [notifications, unreadCount]);
 
   const handleLogout = () => {
     useAuthStore.getState().logout();
@@ -183,6 +195,26 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
     } catch (error) {
       console.error('Fund Wallet Error:', error);
       toast.error('Failed to process wallet funding');
+    }
+  };
+
+  const sendTestNotification = async () => {
+    try {
+        await apiClient.post('/test-notification');
+        toast.success('Test notification sent');
+    } catch (error) {
+        console.error('Failed to send test notification:', error);
+        toast.error('Failed to send test notification');
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+        await deleteNotification(id);
+        toast.success('Notification deleted');
+    } catch (error: any) {
+        console.error('Failed to delete notification:', error);
+        toast.error(error.response?.data?.error || 'Failed to delete notification');
     }
   };
 
@@ -400,6 +432,138 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                   <p className="truncate text-xs text-muted-foreground">
                     {user?.email || 'No email'}
                   </p>
+                </div>
+
+                {/* Add Notifications and Test Button here */}
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      align="end" 
+                      className="w-[calc(100vw-32px)] sm:w-[380px] p-0 mx-4"
+                      sideOffset={8}
+                    >
+                      <div className="flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b px-3 py-3">
+                          <div>
+                            <h4 className="font-semibold text-sm">Notifications</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {unreadCount 
+                                ? `You have ${unreadCount} unread notifications` 
+                                : 'No new notifications'}
+                            </p>
+                          </div>
+                          {unreadCount > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={markAllAsRead}
+                              className="text-xs"
+                            >
+                              <CheckCheck className="mr-2 h-4 w-4" />
+                              Mark all read
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Notifications List */}
+                        <ScrollArea className="h-[300px]">
+                          {notifications.length > 0 ? (
+                            <div className="flex flex-col">
+                              {notifications.slice(0, 5).map((notification) => (
+                                <div
+                                  key={notification.id}
+                                  className={cn(
+                                    "flex items-start gap-3 p-3",
+                                    "hover:bg-muted/50 transition-colors",
+                                    !notification.read && "bg-muted/30"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "mt-1 h-2 w-2 rounded-full",
+                                    !notification.read ? "bg-primary" : "bg-muted-foreground/30"
+                                  )} />
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between gap-4">
+                                      <p className={cn(
+                                        "text-sm",
+                                        !notification.read && "font-medium"
+                                      )}>
+                                        {notification.title}
+                                      </p>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                        onClick={() => handleDeleteNotification(notification.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      {notification.message}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                      </p>
+                                      {notification.action_url && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 text-xs"
+                                          onClick={() => navigate(notification.action_url)}
+                                        >
+                                          <ExternalLink className="mr-1 h-3 w-3" />
+                                          View
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-8 text-center px-3">
+                              <Bell className="h-12 w-12 text-muted-foreground/30" />
+                              <h3 className="mt-4 text-sm font-medium">No notifications</h3>
+                              <p className="text-xs text-muted-foreground">
+                                We'll notify you when something arrives
+                              </p>
+                            </div>
+                          )}
+                        </ScrollArea>
+
+                        {/* Footer */}
+                        <div className="border-t p-2">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-center text-sm"
+                            onClick={() => navigate('/dashboard/notifications')}
+                          >
+                            View all notifications
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={sendTestNotification}
+                    className="ml-2"
+                  >
+                    Test
+                  </Button>
                 </div>
               </div>
             </div>
@@ -713,59 +877,136 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Notifications */}
+              {/* Mobile Notifications */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-                      3
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent 
                   align="end" 
-                  className="w-80 z-[100]"
+                  className="w-[calc(100vw-32px)] sm:w-[380px] p-0 mx-4"
                   sideOffset={8}
                 >
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">Recent Notifications</h4>
-                    <div className="space-y-3">
-                      {[
-                        {
-                          title: "New Course Available",
-                          desc: "Advanced React Patterns course is now live",
-                          time: "2 hours ago"
-                        },
-                        {
-                          title: "Assignment Due",
-                          desc: "Web Development Basics assignment due in 24 hours",
-                          time: "5 hours ago"
-                        },
-                        {
-                          title: "Wallet Funded",
-                          desc: "Your wallet has been credited with ₦50,000",
-                          time: "1 day ago"
-                        }
-                      ].map((notification, i) => (
-                        <div key={i} className="flex gap-2 text-sm">
-                          <div className="h-2 w-2 mt-1.5 rounded-full bg-primary shrink-0" />
-                          <div>
-                            <p className="font-medium">{notification.title}</p>
-                            <p className="text-muted-foreground text-xs">
-                              {notification.desc}
-                            </p>
-                            <p className="text-xs text-primary">{notification.time}</p>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b px-3 py-3">
+                      <div>
+                        <h4 className="font-semibold text-sm">Notifications</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {unreadCount 
+                            ? `You have ${unreadCount} unread notifications` 
+                            : 'No new notifications'}
+                        </p>
+                      </div>
+                      {unreadCount > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={markAllAsRead}
+                          className="text-xs"
+                        >
+                          <CheckCheck className="mr-2 h-4 w-4" />
+                          Mark all read
+                        </Button>
+                      )}
                     </div>
-                    <Button variant="ghost" className="w-full justify-start text-primary text-sm">
-                      View All Notifications
-                    </Button>
+
+                    {/* Notifications List */}
+                    <ScrollArea className="h-[300px]">
+                      {notifications.length > 0 ? (
+                        <div className="flex flex-col">
+                          {notifications.slice(0, 5).map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={cn(
+                                "flex items-start gap-3 p-3",
+                                "hover:bg-muted/50 transition-colors",
+                                !notification.read && "bg-muted/30"
+                              )}
+                            >
+                              <div className={cn(
+                                "mt-1 h-2 w-2 rounded-full",
+                                !notification.read ? "bg-primary" : "bg-muted-foreground/30"
+                              )} />
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center justify-between gap-4">
+                                  <p className={cn(
+                                    "text-sm",
+                                    !notification.read && "font-medium"
+                                  )}>
+                                    {notification.title}
+                                  </p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    onClick={() => handleDeleteNotification(notification.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {notification.message}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                  </p>
+                                  {notification.action_url && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-xs"
+                                      onClick={() => navigate(notification.action_url)}
+                                    >
+                                      <ExternalLink className="mr-1 h-3 w-3" />
+                                      View
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-center px-3">
+                          <Bell className="h-12 w-12 text-muted-foreground/30" />
+                          <h3 className="mt-4 text-sm font-medium">No notifications</h3>
+                          <p className="text-xs text-muted-foreground">
+                            We'll notify you when something arrives
+                          </p>
+                        </div>
+                      )}
+                    </ScrollArea>
+
+                    {/* Footer */}
+                    <div className="border-t p-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-center text-sm"
+                        onClick={() => navigate('/dashboard/notifications')}
+                      >
+                        View all notifications
+                      </Button>
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
+
+              {/* Add Test Notification Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={sendTestNotification}
+                className="ml-2"
+              >
+                Test
+              </Button>
 
               {/* Cart Icon */}
               <Button 

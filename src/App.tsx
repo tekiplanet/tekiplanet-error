@@ -28,6 +28,7 @@ import InvoiceDetails from "@/pages/business/InvoiceDetails";
 import BusinessDashboard from "@/components/dashboard/BusinessDashboard";
 import BusinessActivities from "@/pages/business/BusinessActivities";
 import { lazy } from "react";
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 // Lazy load pages
 const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
@@ -229,9 +230,11 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <LoadingProvider>
             <TooltipProvider>
-              <div className="min-h-screen transition-colors duration-300">
-                <AppContent />
-              </div>
+              <NotificationProvider>
+                <div className="min-h-screen transition-colors duration-300">
+                  <AppContent />
+                </div>
+              </NotificationProvider>
             </TooltipProvider>
           </LoadingProvider>
         </QueryClientProvider>

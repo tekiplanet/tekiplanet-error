@@ -44,6 +44,9 @@ use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\BusinessSettingsController;
 use App\Http\Controllers\ProfessionalSettingsController;
 use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\NotificationController;
+use App\Services\NotificationService;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -362,4 +365,84 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bank-accounts/default', [WithdrawalController::class, 'setDefaultAccount']);
     Route::post('/withdraw', [WithdrawalController::class, 'withdraw']);
     Route::delete('/bank-accounts/{id}', [WithdrawalController::class, 'deleteBankAccount']);
+});
+
+// Add these routes to your existing routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+
+    // Test route to create a notification
+    Route::post('/test-notification', function (Request $request, NotificationService $notificationService) {
+        try {
+            $testData = [
+                'type' => 'system',
+                'title' => 'Test Notification',
+                'message' => 'This is a test notification',
+                'icon' => 'bell',
+                'action_url' => '/dashboard'
+            ];
+
+            $notification = $notificationService->send($testData, $request->user());
+            
+            return response()->json([
+                'message' => 'Test notification sent',
+                'notification' => $notification
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Test notification failed: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/test-pusher-auth', function (Request $request) {
+        return response()->json([
+            'message' => 'Pusher auth endpoint reached',
+            'user' => $request->user()
+        ]);
+    });
+});
+
+Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
+    return response()->json([
+        'message' => 'Auth working',
+        'user' => $request->user()
+    ]);
+});
+
+Route::middleware('auth:sanctum')->get('/test-broadcast-auth', function (Request $request) {
+    return response()->json([
+        'message' => 'Broadcast auth test',
+        'user' => $request->user(),
+        'headers' => $request->headers->all()
+    ]);
+});
+
+Route::middleware('auth:sanctum')->post('/broadcasting/auth', function (Request $request) {
+    \Log::info('Broadcasting auth request', [
+        'user' => $request->user()->id,
+        'headers' => $request->headers->all(),
+        'socketId' => $request->socket_id,
+        'channel' => $request->channel_name
+    ]);
+
+    try {
+        return Broadcast::auth($request);
+    } catch (\Exception $e) {
+        \Log::error('Broadcasting auth error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 403);
+    }
 });
