@@ -383,7 +383,7 @@ export default function CourseDetails() {
                   <Users className="h-5 w-5 text-primary" />
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Students</p>
-                    <p className="font-semibold">{course.students_count || 0}</p>
+                    <p className="font-semibold">{course.total_students || 0}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-muted/50">
@@ -415,7 +415,7 @@ export default function CourseDetails() {
                     <Users className="h-4 w-4 text-primary" />
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground">Students</p>
-                      <p className="text-sm font-semibold">{course.students_count || 0}</p>
+                      <p className="text-sm font-semibold">{course.total_students || 0}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-muted/50">
