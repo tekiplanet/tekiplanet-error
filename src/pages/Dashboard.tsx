@@ -188,6 +188,11 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
   const menuItems: MenuItem[] = [
     // MAIN NAVIGATION
     {
+      label: "Home",
+      path: "/dashboard",
+      icon: <Home className="w-4 h-4" />
+    },
+    {
       label: "Wallet",
       path: "/dashboard/wallet",
       icon: <Wallet className="w-4 h-4" />
@@ -384,13 +389,12 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <h3 className="truncate text-sm font-medium">
-                    {user?.username || 
-                     (user?.first_name && user?.last_name 
-                       ? `${user.first_name} ${user.last_name}` 
-                       : user?.first_name || 
-                         user?.last_name || 
-                         user?.email || 
-                         'User')}
+                    {(user?.first_name && user?.last_name) 
+                      ? `${user.first_name} ${user.last_name}`
+                      : user?.username || 
+                        user?.email || 
+                        'User'
+                    }
                   </h3>
                   <p className="truncate text-xs text-muted-foreground">
                     {user?.email || 'No email'}
@@ -403,7 +407,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
             <div className="flex-1 overflow-y-auto">
               <nav className="flex-1 space-y-1 px-4 py-2 overflow-y-auto">
                 {/* Main Navigation */}
-                {menuItems.slice(0, 4).map((item) => (
+                {menuItems.slice(0, 5).map((item) => (
                   <Button
                     key={item.path}
                     variant={location.pathname === item.path ? "secondary" : "ghost"}
@@ -895,13 +899,12 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold truncate">
-                            {user?.username || 
-                             (user?.first_name && user?.last_name 
-                               ? `${user.first_name} ${user.last_name}` 
-                               : user?.first_name || 
-                                 user?.last_name || 
-                                 user?.email || 
-                                 'User')}
+                            {(user?.first_name && user?.last_name) 
+                              ? `${user.first_name} ${user.last_name}`
+                              : user?.username || 
+                                user?.email || 
+                                'User'
+                            }
                           </h3>
                           <p className="text-sm text-muted-foreground truncate">
                             {user?.email || 'No email'}
@@ -978,7 +981,7 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
                         {/* Main Navigation - Shows for all */}
                         <div className="space-y-1">
                           <h4 className="text-sm font-medium text-muted-foreground px-2 mb-2">Main Navigation</h4>
-                          {menuItems.slice(0, 4).map((item) => (
+                          {menuItems.slice(0, 5).map((item) => (
                             <Button
                               key={item.path}
                               variant={location.pathname === item.path ? "secondary" : "ghost"}
