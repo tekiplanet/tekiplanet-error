@@ -51,18 +51,24 @@ class WithdrawalController extends Controller
             ]);
 
             if (!$response->successful()) {
-                return response()->json(['error' => 'Account verification failed'], 400);
+                // Get the error message from Paystack response
+                $errorMessage = $response->json()['message'] ?? 'Account verification failed';
+                return response()->json(['error' => $errorMessage], 400);
             }
 
             $accountData = $response->json()['data'];
             
             // Verify account name matches user's name
             $user = auth()->user();
-            if (strtolower($accountData['account_name']) !== strtolower($user->name)) {
+            $accountName = strtolower($accountData['account_name']);
+            $firstName = strtolower($user->first_name);
+            $lastName = strtolower($user->last_name);
+
+            if (!str_contains($accountName, $firstName) || !str_contains($accountName, $lastName)) {
                 return response()->json([
-                    'error' => 'Account name does not match user name',
+                    'error' => 'Account name must contain your first and last name',
                     'account_name' => $accountData['account_name'],
-                    'user_name' => $user->name
+                    'user_name' => $user->first_name . ' ' . $user->last_name
                 ], 400);
             }
 

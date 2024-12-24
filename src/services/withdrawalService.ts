@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import axios from 'axios';
 
 export interface Bank {
   id: number;
@@ -30,11 +31,18 @@ export const withdrawalService = {
   },
 
   async verifyAccount(accountNumber: string, bankCode: string) {
-    const response = await api.post<{ account_name: string }>('/bank-accounts/verify', {
-      account_number: accountNumber,
-      bank_code: bankCode
-    });
-    return response.data;
+    try {
+      const response = await api.post<{ account_name: string }>('/bank-accounts/verify', {
+        account_number: accountNumber,
+        bank_code: bankCode
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw error;
+      }
+      throw new Error('Failed to verify account');
+    }
   },
 
   async addBankAccount(data: {

@@ -89,7 +89,21 @@ export default function WithdrawalModal({ open, onOpenChange }: WithdrawalModalP
       toast.success('Account verified successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to verify account');
+      console.log('Verification Error:', error);
+      console.log('Error Response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.error || 'Failed to verify account';
+      const accountName = error.response?.data?.account_name;
+      const userName = error.response?.data?.user_name;
+
+      if (accountName && userName) {
+        toast.error(errorMessage, {
+          description: `Account Name: ${accountName}\nYour Name: ${userName}`
+        });
+      } else {
+        toast.error(errorMessage);
+      }
+      
       setVerifiedAccount(null);
     }
   });
