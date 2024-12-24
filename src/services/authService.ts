@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 interface LoginData {
   login: string;
@@ -57,7 +57,8 @@ export const authService = {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
+          'X-Requested-With': 'XMLHttpRequest',
+          'Access-Control-Allow-Credentials': 'true'
         },
         body: JSON.stringify(credentials)
       });
@@ -70,22 +71,32 @@ export const authService = {
 
       // Parse response body once
       const responseBody = await response.text();
+      console.log('Raw response body:', responseBody);  // Add this line for debugging
 
       if (!response.ok) {
         console.error('Login error response:', responseBody);
         
-        // Try to parse JSON if possible
+        // Enhanced error handling
         let errorMessage = 'Login failed';
         try {
           const errorJson = JSON.parse(responseBody);
-          errorMessage = errorJson.message || errorMessage;
-        } catch {
+          errorMessage = errorJson.message || errorJson.error || (errorJson.errors ? Object.values(errorJson.errors).flat()[0] : errorMessage);
+        } catch (e) {
+          console.error('Error parsing error response:', e);
           errorMessage = responseBody || errorMessage;
         }
 
-        // Specific handling for rate limiting
-        if (response.status === 429) {
-          errorMessage = 'Too many login attempts. Please wait a moment and try again.';
+        // Specific status code handling
+        switch (response.status) {
+          case 401:
+            errorMessage = 'Invalid credentials. Please check your email/username and password.';
+            break;
+          case 429:
+            errorMessage = 'Too many login attempts. Please wait a moment and try again.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
         }
 
         throw new Error(errorMessage);
