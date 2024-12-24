@@ -49,6 +49,8 @@ apiClient.interceptors.response.use(
             return Promise.reject(new Error('Session expired. Please login again.'));
         }
 
-        return Promise.reject(error);
+        // Get error message from response
+        const errorMessage = error.response?.data?.message || error.message;
+        return Promise.reject(new Error(errorMessage));
     }
 );
