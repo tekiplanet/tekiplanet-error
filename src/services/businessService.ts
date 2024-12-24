@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api-client';
 
 export interface BusinessProfile {
   id: string;
@@ -42,12 +42,12 @@ interface ActivityParams {
 
 export const businessService = {
   async getProfile() {
-    const response = await api.get<BusinessProfile>('/business/profile');
+    const response = await apiClient.get<BusinessProfile>('/business/profile');
     return response.data;
   },
   async checkProfile() {
     try {
-      const response = await api.get('/business/profile/check');
+      const response = await apiClient.get('/business/profile/check');
       return response.data;
     } catch (error) {
       console.error('Error checking business profile:', error);
@@ -56,7 +56,7 @@ export const businessService = {
   },
   async getMetrics() {
     try {
-      const response = await api.get('/business/metrics');
+      const response = await apiClient.get('/business/metrics');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch business metrics:', error);
@@ -71,7 +71,7 @@ export const businessService = {
       if (params.from) searchParams.set('from', params.from.toISOString());
       if (params.to) searchParams.set('to', params.to.toISOString());
 
-      const response = await api.get(`/business/transactions?${searchParams.toString()}`);
+      const response = await apiClient.get(`/business/transactions?${searchParams.toString()}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -87,7 +87,7 @@ export const businessService = {
       if (params.from) searchParams.set('from', params.from.toISOString());
       if (params.to) searchParams.set('to', params.to.toISOString());
 
-      const response = await api.get(`/business/activities?${searchParams.toString()}`);
+      const response = await apiClient.get(`/business/activities?${searchParams.toString()}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching activities:', error);
@@ -96,10 +96,23 @@ export const businessService = {
   },
   async checkProfessional() {
     try {
-      const response = await api.get('/professional/profile/check');
+      const response = await apiClient.get('/professional/profile/check');
       return response.data;
     } catch (error) {
       console.error('Error checking professional profile:', error);
+      throw error;
+    }
+  },
+  async createProfile(formData: FormData) {
+    try {
+      const response = await apiClient.post('/business/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating business profile:', error);
       throw error;
     }
   }

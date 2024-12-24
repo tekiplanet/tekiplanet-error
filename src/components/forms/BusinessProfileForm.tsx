@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/popover";
 import { useState as useHookState } from "react";
 import { FormDescription } from "@/components/ui/form";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const businessProfileSchema = z.object({
   // Step 1: Basic Info
@@ -61,81 +62,32 @@ const businessProfileSchema = z.object({
 
 const steps = [
   {
-    id: 'basic-info',
-    title: 'Basic Information',
-    description: 'Start with your business basics',
-    fields: ['business_name', 'business_email', 'phone_number', 'business_type']
+    title: "Basic Information",
+    fields: ["business_name", "business_email", "phone_number", "business_type"]
   },
   {
-    id: 'location',
-    title: 'Location Details',
-    description: 'Where is your business located?',
-    fields: ['address', 'city', 'state', 'country']
+    title: "Location",
+    fields: ["address", "city", "state", "country"]
   },
   {
-    id: 'additional-info',
-    title: 'Additional Information',
-    description: 'Tell us more about your business',
-    fields: ['logo', 'registration_number', 'tax_number', 'website', 'description']
+    title: "Additional Information",
+    fields: ["logo", "registration_number", "tax_number", "website", "description"]
   }
 ];
 
 const businessTypes = [
-  "Accounting & Financial Services",
-  "Advertising & Marketing",
-  "Aerospace & Aviation",
-  "Agriculture & Farming",
-  "Artificial Intelligence & Machine Learning",
-  "Automotive",
-  "Banking & Investment",
-  "Biotechnology",
-  "Chemical Industry",
-  "Cloud Computing & Services",
-  "Construction & Real Estate",
-  "Consulting Services",
-  "Consumer Electronics",
-  "Cybersecurity",
-  "Data Analytics & Business Intelligence",
-  "E-commerce & Online Retail",
-  "Education & E-learning",
-  "Energy & Utilities",
-  "Entertainment & Media",
-  "Environmental Services",
-  "Fashion & Apparel",
-  "Food & Beverage",
-  "Gaming & Esports",
-  "Healthcare & Medical Services",
-  "Hospitality & Tourism",
-  "Human Resources & Recruitment",
-  "Industrial Manufacturing",
-  "Information Technology",
-  "Insurance",
-  "Interior Design & Architecture",
-  "Legal Services",
-  "Logistics & Supply Chain",
-  "Mining & Metals",
-  "Mobile App Development",
-  "NGO & Non-Profit",
-  "Oil & Gas",
-  "Pharmaceutical",
-  "Photography & Visual Arts",
-  "Print & Publishing",
-  "Public Relations",
-  "Real Estate Development",
-  "Renewable Energy",
-  "Research & Development",
-  "Restaurant & Food Services",
-  "Retail & Consumer Goods",
-  "Social Media & Digital Marketing",
-  "Software Development",
-  "Sports & Fitness",
-  "Telecommunications",
-  "Transportation & Delivery",
-  "Travel & Tourism",
-  "Web Development & Design",
-  "Wholesale & Distribution",
-  "Other"
-] as const;
+  'Retail',
+  'E-commerce',
+  'Service',
+  'Manufacturing',
+  'Technology',
+  'Consulting',
+  'Healthcare',
+  'Education',
+  'Food & Beverage',
+  'Real Estate',
+  'Other'
+];
 
 const nigerianStates = [
   "Abia",
@@ -186,6 +138,7 @@ export function BusinessProfileForm() {
   const [stateSearchValue, setStateSearchValue] = useHookState("");
   const [stateOpen, setStateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const user = useAuthStore(state => state.user);
 
   const form = useForm<z.infer<typeof businessProfileSchema>>({
     resolver: zodResolver(businessProfileSchema),
@@ -231,17 +184,30 @@ export function BusinessProfileForm() {
   async function onSubmit(values: z.infer<typeof businessProfileSchema>) {
     try {
       setIsSubmitting(true);
+      console.log('Form values:', values);
       
       const formData = new FormData();
       Object.keys(values).forEach(key => {
-        formData.append(key, values[key as keyof typeof values]);
+        const value = values[key as keyof typeof values];
+        console.log(`Adding to FormData: ${key} =`, value);
+        formData.append(key, value);
       });
 
-      await businessService.createProfile(formData);
+      // Log auth token
+      const token = localStorage.getItem('token');
+      console.log('Auth token:', token);
+
+      console.log('Submitting form data...');
+      const response = await businessService.createProfile(formData);
+      console.log('Profile creation response:', response);
+
       queryClient.invalidateQueries({ queryKey: ['business-profile'] });
       toast.success("Business profile created successfully");
       navigate('/dashboard');
     } catch (error: any) {
+      console.error('Profile creation error:', error);
+      console.error('Error response:', error.response?.data);
+      
       toast.error(
         "Failed to create profile", 
         { description: error.response?.data?.message || "Please try again" }
@@ -308,73 +274,69 @@ export function BusinessProfileForm() {
                         </FormLabel>
                         <FormControl>
                           {field === 'business_type' ? (
-                            <FormItem className="flex flex-col">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
+                            <FormItem>
+                              <FormLabel>Business Type</FormLabel>
+                              <FormControl>
+                                <Popover open={open} onOpenChange={setOpen}>
+                                  <PopoverTrigger asChild>
                                     <Button
                                       variant="outline"
                                       role="combobox"
                                       aria-expanded={open}
-                                      className={cn(
-                                        "w-full justify-between",
-                                        !fieldProps.value && "text-muted-foreground"
-                                      )}
+                                      className="w-full justify-between"
                                     >
-                                      {fieldProps.value || "Select business type"}
+                                      {fieldProps.value
+                                        ? businessTypes.find(
+                                            (businessType) => businessType === fieldProps.value
+                                          )
+                                        : "Select business type..."}
                                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent 
-                                  align="start"
-                                  side="top"
-                                  sideOffset={8}
-                                  alignOffset={0}
-                                  className={cn(
-                                    "p-0 w-[var(--radix-popper-anchor-width)]",
-                                    "max-w-[400px]"
-                                  )}
-                                >
-                                  <Command className="w-full">
-                                    <div className="flex items-center border-b px-3">
-                                      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                                      <input
-                                        placeholder="Search business types..."
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0">
+                                    <Command>
+                                      <CommandInput
+                                        placeholder="Search business type..."
                                         value={searchValue}
-                                        onChange={(e) => setSearchValue(e.target.value)}
-                                        className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                        onValueChange={setSearchValue}
                                       />
-                                    </div>
-                                    <div className="p-2 max-h-[300px] overflow-y-auto">
-                                      {businessTypes
-                                        .filter((type) =>
-                                          type.toLowerCase().includes(searchValue.toLowerCase())
-                                        )
-                                        .map((type) => (
-                                          <div
-                                            key={type}
-                                            onClick={() => {
-                                              fieldProps.onChange(type);
-                                              setOpen(false);
-                                            }}
-                                            className={cn(
-                                              "flex items-center gap-2 w-full rounded-sm px-2 py-3 cursor-pointer hover:bg-muted",
-                                              fieldProps.value === type && "bg-muted"
-                                            )}
-                                          >
-                                            <div className="flex flex-col flex-1">
-                                              <span className="font-medium">{type}</span>
+                                      <CommandList>
+                                        <CommandEmpty>No business type found.</CommandEmpty>
+                                        <CommandGroup>
+                                          <ScrollArea className="h-72">
+                                            <div className="p-2">
+                                              {businessTypes
+                                                .filter((type) =>
+                                                  type.toLowerCase().includes(searchValue.toLowerCase())
+                                                )
+                                                .map((type) => (
+                                                  <div
+                                                    key={type}
+                                                    onClick={() => {
+                                                      fieldProps.onChange(type);
+                                                      setOpen(false);
+                                                    }}
+                                                    className={cn(
+                                                      "flex items-center gap-2 w-full rounded-sm px-2 py-3 cursor-pointer hover:bg-muted",
+                                                      fieldProps.value === type && "bg-muted"
+                                                    )}
+                                                  >
+                                                    <div className="flex flex-col flex-1">
+                                                      <span className="font-medium">{type}</span>
+                                                    </div>
+                                                    {fieldProps.value === type && (
+                                                      <Check className="h-4 w-4 text-primary" />
+                                                    )}
+                                                  </div>
+                                                ))}
                                             </div>
-                                            {fieldProps.value === type && (
-                                              <Check className="h-4 w-4 text-primary" />
-                                            )}
-                                          </div>
-                                        ))}
-                                    </div>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
+                                          </ScrollArea>
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           ) : field === 'state' ? (
@@ -455,7 +417,6 @@ export function BusinessProfileForm() {
                                   value="Nigeria"
                                   disabled
                                   className="bg-muted"
-                                  onMount={() => fieldProps.onChange("Nigeria")}
                                 />
                               </FormControl>
                               <FormMessage />

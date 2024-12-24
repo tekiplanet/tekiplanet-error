@@ -11,6 +11,7 @@ class BusinessProfile extends Model
     use HasUuids;
 
     protected $fillable = [
+        'user_id',
         'business_name',
         'business_email',
         'phone_number',
@@ -22,7 +23,9 @@ class BusinessProfile extends Model
         'city',
         'state',
         'country',
-        'status'
+        'business_type',
+        'status',
+        'logo'
     ];
 
     protected $casts = [

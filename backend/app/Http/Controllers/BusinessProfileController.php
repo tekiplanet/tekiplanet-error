@@ -64,9 +64,9 @@ class BusinessProfileController extends Controller
                 $logoPath = $request->file('logo')->store('business-logos', 'public');
             }
 
-            // Create business profile
+            // Create business profile with user_id
             $profile = BusinessProfile::create([
-                'user_id' => Auth::id(),
+                'user_id' => auth()->id(), // Explicitly set user_id
                 'business_name' => $request->business_name,
                 'business_email' => $request->business_email,
                 'phone_number' => $request->phone_number,
