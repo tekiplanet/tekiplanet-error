@@ -40,6 +40,7 @@ const Academy = React.lazy(() => import('@/pages/Academy'));
 const OrderTracking = React.lazy(() => import('@/pages/OrderTracking'));
 const Orders = React.lazy(() => import('@/pages/Orders'));
 const MyCourses = React.lazy(() => import('@/pages/MyCourses'));
+const Notifications = React.lazy(() => import('@/pages/Notifications'));
 
 // Add these new imports
 const Store = React.lazy(() => import('@/pages/Store'));
@@ -159,6 +160,7 @@ const AppContent = () => {
             <Route path="business/activities" element={<BusinessActivities />} />
             <Route path="activities" element={<ActivitiesPage />} />
             <Route path="academy/certificates" element={<CertificatesPage />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
