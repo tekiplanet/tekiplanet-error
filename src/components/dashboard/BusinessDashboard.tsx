@@ -293,7 +293,7 @@ export default function BusinessDashboard() {
 
   const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ['business-profile'],
-    queryFn: businessService.checkProfile,
+    queryFn: businessService.getProfile,
     retry: false
   });
 
@@ -308,11 +308,11 @@ export default function BusinessDashboard() {
     return <LoadingSkeleton />;
   }
 
-  if (!profileData?.has_profile) {
+  if (!profileData) {
     return <NoBusinessProfile />;
   }
 
-  if (profileData?.profile?.status === 'inactive') {
+  if (profileData.status === 'inactive') {
     return <InactiveBusinessProfile />;
   }
 
