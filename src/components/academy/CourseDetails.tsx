@@ -332,7 +332,7 @@ export default function CourseDetails() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Star className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm">{course.average_rating || 'N/A'}</span>
+                      <span className="text-sm">{course.rating?.toFixed(1) || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export default function CourseDetails() {
                   <Star className="h-5 w-5 text-yellow-500" />
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Rating</p>
-                    <p className="font-semibold">{course.average_rating || 'N/A'}</p>
+                    <p className="font-semibold">{course.rating?.toFixed(1) || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-muted/50">
