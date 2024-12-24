@@ -29,6 +29,19 @@ export interface Hustle {
     };
     created_at: string;
   }>;
+  payments?: Array<{
+    id: string;
+    amount: number;
+    payment_type: "initial" | "final";
+    status: "pending" | "completed" | "failed";
+    paid_at: string;
+    date: string;
+    method: string;
+    transactionId?: string;
+    paidBy?: string;
+    reference?: string;
+    notes?: string;
+  }>;
   cannot_apply_reason?: string;
   professional?: {
     id: string;

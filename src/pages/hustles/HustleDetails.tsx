@@ -287,6 +287,7 @@ const HustleDetails = () => {
                   </>
                 ) : (
                   <>
+
                     <UserCheck className="h-5 w-5 mr-2" />
                     {applicationStatus.can_apply ? 'Apply for Hustle' : (
                       hustle.application_status === 'pending' ? 'Application Pending' :
@@ -295,6 +296,7 @@ const HustleDetails = () => {
                       'Cannot Apply'
                     )}
                   </>
+
                 )}
               </Button>
             </div>
@@ -402,38 +404,9 @@ const HustleDetails = () => {
             </TabsList>
 
             <TabsContent value="details" className="space-y-4">
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 md:p-6 bg-muted/5">
-                  <CardTitle className="text-lg">Description</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6">
-                  <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">
-                    {hustle.description}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 md:p-6 bg-muted/5">
-                  <CardTitle className="text-lg">Requirements</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6">
-                  <div className="space-y-3">
-                    {hustle.requirements.split('\n').map((req, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-start gap-3 group"
-                      >
-                        <div className="h-6 w-6 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
-                        </div>
-                        <p className="text-sm md:text-base leading-relaxed">{req}</p>
-                      </motion.div>
-                    ))}
-                  </div>
+              <Card>
+                <CardContent className="p-4 md:p-6 prose dark:prose-invert max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: hustle.description }} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -441,17 +414,13 @@ const HustleDetails = () => {
             {hustle.application_status === 'approved' && (
               <>
                 <TabsContent value="chat">
-                  <Card className="h-[calc(100vh-20rem)] overflow-hidden">
-                    <CardHeader className="p-4 bg-muted/5">
-                      <CardTitle className="text-lg">Chat with Admin</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 h-[calc(100%-4rem)]">
-                      <HustleChat hustleId={id!} />
-                    </CardContent>
-                  </Card>
+                  <HustleChat hustleId={hustle.id} />
                 </TabsContent>
                 <TabsContent value="payments">
-                  <PaymentTab hustle={hustle} />
+                  <PaymentTab 
+                    payments={hustle.payments || []} 
+                    currency={settings?.default_currency || 'USD'} 
+                  />
                 </TabsContent>
               </>
             )}
