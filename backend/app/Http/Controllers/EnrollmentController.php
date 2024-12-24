@@ -537,21 +537,32 @@ class EnrollmentController extends Controller
         // Get the authenticated user
         $user = Auth::user();
 
-        // Find the course
-        $course = Course::findOrFail($validated['course_id']);
-
-        // Find the specific installment
+        // Find the installment
         $installment = Installment::findOrFail($validated['installment_id']);
 
-        // Validate the installment belongs to the user and course
-        if ($installment->user_id !== $user->id || $installment->enrollment->course_id !== $course->id) {
+        // Verify the installment belongs to the course
+        if ($installment->enrollment->course_id != $validated['course_id']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid installment'
+                'message' => 'Invalid installment for this course'
             ], 400);
         }
 
-        // Validate amount matches installment amount
+        // Find the earliest unpaid installment for this enrollment
+        $earliestUnpaidInstallment = Installment::where('enrollment_id', $installment->enrollment_id)
+            ->where('status', '!=', 'paid')
+            ->orderBy('order', 'asc')
+            ->first();
+
+        // Check if trying to pay an installment out of order
+        if ($earliestUnpaidInstallment && $earliestUnpaidInstallment->id !== $installment->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please pay the earliest due installment first'
+            ], 400);
+        }
+
+        // Verify amount matches installment amount
         if (abs($installment->amount - $validated['amount']) > 0.01) {
             return response()->json([
                 'success' => false,
@@ -559,15 +570,8 @@ class EnrollmentController extends Controller
             ], 400);
         }
 
-        // Debug logging
-        Log::info('Installment payment attempt', [
-            'installment_id' => $installment->id,
-            'current_status' => $installment->status,
-            'current_paid_at' => $installment->paid_at
-        ]);
-
         // Check if installment is already paid
-        if ($installment->status === 'paid' || !is_null($installment->paid_at)) {
+        if ($installment->status === 'paid') {
             return response()->json([
                 'success' => false,
                 'message' => 'This installment has already been paid'
@@ -586,7 +590,7 @@ class EnrollmentController extends Controller
         DB::beginTransaction();
 
         try {
-            // Deduct balance from user's wallet
+            // Deduct from wallet
             $user->wallet_balance -= $validated['amount'];
             $user->save();
 
@@ -598,15 +602,15 @@ class EnrollmentController extends Controller
                 'user_id' => $user->id,
                 'amount' => $validated['amount'],
                 'type' => 'debit',
-                'description' => 'Installment payment for course: ' . $course->title,
+                'description' => 'Installment payment for course: ' . $enrollment->course->title,
                 'category' => 'course_payment',
                 'status' => 'completed',
-                'payment_method' => $request->input('payment_method', 'wallet'),
+                'payment_method' => 'wallet',
                 'reference_number' => 'INST-' . $installment->id,
                 'notes' => 'Installment ID: ' . $installment->id
             ]);
 
-            // Update installment status explicitly
+            // Update installment status
             $installment->status = 'paid';
             $installment->paid_at = now();
             $installment->save();
@@ -634,14 +638,6 @@ class EnrollmentController extends Controller
             // Commit transaction
             DB::commit();
 
-            // Log the transaction
-            Log::info('Installment payment processed', [
-                'user_id' => $user->id,
-                'course_id' => $course->id,
-                'installment_id' => $installment->id,
-                'amount' => $validated['amount']
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Installment payment processed successfully',
@@ -656,7 +652,6 @@ class EnrollmentController extends Controller
             // Log error
             Log::error('Specific installment payment processing failed', [
                 'user_id' => $user->id,
-                'course_id' => $course->id,
                 'installment_id' => $installment->id,
                 'error' => $e->getMessage()
             ]);

@@ -184,7 +184,6 @@ export const enrollmentService = {
     }
   }, 
   
-  
   async getUserCourseEnrollment(courseId: number | string) {
     try {
       const response = await api.get(`/courses/${courseId}/enrollment`);
@@ -304,6 +303,7 @@ export const enrollmentService = {
         course_id: courseId,
         installment_id: installmentId,
         amount,
+        payment_method: 'wallet',
         due_date: dueDate
       });
 
