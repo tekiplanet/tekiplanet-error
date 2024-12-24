@@ -1219,14 +1219,14 @@ const Dashboard = ({ children }: { children?: React.ReactNode }) => {
               <Button 
                 variant="ghost" 
                 size="icon"
-                onClick={() => navigate('/dashboard/settings')}
+                onClick={() => navigate('/dashboard/wallet')}
                 className={cn(
                   "w-12 h-12 rounded-full",
                   "transition-all duration-200 ease-in-out",
-                  location.pathname.includes('/settings') && "text-primary"
+                  location.pathname.includes('/wallet') && "text-primary"
                 )}
               >
-                <Settings className="h-5 w-5" />
+                <Wallet className="h-5 w-5" />
               </Button>
             </div>
           </div>
