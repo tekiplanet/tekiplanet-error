@@ -437,6 +437,9 @@ class BusinessInvoiceController extends Controller
                 ]);
             }
 
+            // Add this line to send the payment receipt
+            SendPaymentReceiptEmail::dispatch($payment->fresh()->load(['invoice.business', 'invoice.customer']));
+
             DB::commit();
 
             return response()->json([
